@@ -4,9 +4,9 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-// Project Pages are served from https://<org>.github.io/<repo>/, so assets need that sub-path as base. A custom
-// domain (CNAME) serves from root — set VITE_BASE='/' in that case.
-const base = process.env.VITE_BASE ?? '/nexus/';
+// GitHub Pages serves from https://<org>.github.io/<repo>/, so assets need that sub-path as base.
+// In dev or with a custom domain, VITE_BASE should be '/'.
+const base = process.env.VITE_BASE ?? '/';
 
 // By default the site dogfoods the store straight from source for instant feedback. The deploy CI sets
 // VITE_USE_PUBLISHED=true to build the public demo against the latest npm release instead of the dev symlink.

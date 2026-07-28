@@ -27,7 +27,7 @@ function getEntries(root = path.resolve(__dirname, 'src')) {
   return entries;
 }
 
-export default defineConfig({
+export default defineConfig(({ mode, command }) => ({
   plugins: [
     react(),
     dts({
@@ -39,7 +39,7 @@ export default defineConfig({
       name: 'externalize-non-relative',
       enforce: 'pre',
       resolveId(source, importer) {
-        if (!importer || process.env.VITEST) return null;
+        if (!importer || command === 'serve' || process.env.VITEST) return null;
         if (!source.startsWith('.') && !path.isAbsolute(source)) {
           return { id: source, external: true };
         }
@@ -69,7 +69,7 @@ export default defineConfig({
       }
     },
     sourcemap: false,
-    emptyOutDir: true
+    emptyOutDir: mode === 'production'
   },
   test: {
     globals: true,
@@ -84,4 +84,4 @@ export default defineConfig({
     },
     reporters: ['default']
   }
-});
+}));
