@@ -19,26 +19,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Yarn Install (root deps — needed for tsc to resolve alias to ../src)
+        run: yarn install --immutable
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: website/package-lock.json
 
-      - name: Install
+      - name: Install website
         working-directory: website
         run: npm ci
 
-      - name: Pin @plitzi packages to the latest published release
-        working-directory: website
-        run: npm install @plitzi/nexus@latest --no-save --no-audit --no-fund
-
-      - name: Build against published packages
+      - name: Build website
         working-directory: website
         env:
           VITE_BASE: /nexus/
-          VITE_USE_PUBLISHED: 'true'
-        run: npm run build:published
+        run: npm run build
 
       - uses: actions/upload-artifact@v4
         with:
