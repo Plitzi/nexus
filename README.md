@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./logo.svg" alt="@plitzi/nexus — one store, every framework" width="640" />
+  <img src="https://raw.githubusercontent.com/plitzi/nexus/main/logo.svg" alt="@plitzi/nexus — one store, every framework" width="640" />
 </p>
 
 # @plitzi/nexus
