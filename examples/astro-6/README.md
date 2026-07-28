@@ -3,6 +3,9 @@
 Astro **6.x**, the current LTS line, with `@astrojs/react`. Same two patterns as the [astro-7](../astro-7) example —
 the `src/` code is identical; only the toolchain version differs.
 
+> `@plitzi/nexus` is aliased directly to source in `astro.config.mjs` — hot-reloads without a
+> rebuild. Just `npm install` (or `yarn`) and start developing.
+
 ```bash
 yarn dev
 ```

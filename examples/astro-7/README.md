@@ -2,6 +2,9 @@
 
 Astro **7.0** (released 2026-06-22) on Vite 8 with the Rust compiler as default, using `@astrojs/react@6` (React 19).
 
+> `@plitzi/nexus` is aliased directly to source in `astro.config.mjs` — hot-reloads without a
+> rebuild. Just `npm install` (or `yarn`) and start developing.
+
 ```bash
 yarn dev
 ```
