@@ -38,7 +38,7 @@ jobs:
         env:
           VITE_BASE: /nexus/
           VITE_USE_PUBLISHED: 'true'
-        run: npm run build
+        run: npm run build:published
 
       - uses: actions/upload-artifact@v4
         with:
