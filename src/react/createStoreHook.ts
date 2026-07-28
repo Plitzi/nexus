@@ -35,7 +35,9 @@ export const createStoreHook = <TState extends object>() => {
 
   function useStore<P extends PathOf<TState>>(
     path: P,
-    options?: UseStoreOptions<PathValue<TState, P>, TState> & { transformer?: never }
+    options?: UseStoreOptions<PathValue<TState, P>, TState> & {
+      transformer?: never;
+    }
   ): [
     PathValue<TState, P>,
     (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
@@ -43,17 +45,23 @@ export const createStoreHook = <TState extends object>() => {
 
   function useStore<P extends PathOf<TState>, TResult>(
     path: P,
-    options: UseStoreOptions<PathValue<TState, P>, TState> & { transformer: (value: PathValue<TState, P>) => TResult }
+    options: UseStoreOptions<PathValue<TState, P>, TState> & {
+      transformer: (value: PathValue<TState, P>) => TResult;
+    }
   ): [TResult, (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void];
 
   function useStore<P extends PathOf<TState>>(
     pathFn: (state: TState) => P,
-    options?: UseStoreOptions<PathValue<TState, P>, TState> & { transformer?: never }
+    options?: UseStoreOptions<PathValue<TState, P>, TState> & {
+      transformer?: never;
+    }
   ): [PathValue<TState, P>, PathSetter<TState, P>];
 
   function useStore<P extends PathOf<TState>, TResult>(
     pathFn: (state: TState) => P,
-    options: UseStoreOptions<PathValue<TState, P>, TState> & { transformer: (value: PathValue<TState, P>) => TResult }
+    options: UseStoreOptions<PathValue<TState, P>, TState> & {
+      transformer: (value: PathValue<TState, P>) => TResult;
+    }
   ): [TResult, PathSetter<TState, P>];
 
   function useStore<const Paths extends ReadonlyArray<PathOf<TState>>>(
@@ -63,12 +71,16 @@ export const createStoreHook = <TState extends object>() => {
 
   function useStore<const Paths extends ReadonlyArray<PathOf<TState>>, TResult>(
     paths: Paths,
-    options: UseStoreMultiOptions<TState, Paths> & { transformer: (values: PathValues<TState, Paths>) => TResult }
+    options: UseStoreMultiOptions<TState, Paths> & {
+      transformer: (values: PathValues<TState, Paths>) => TResult;
+    }
   ): [TResult, ...PathSetters<TState, Paths>];
 
   function useStore<const Entries extends ReadonlyArray<PathOrFn<TState>>>(
     paths: Entries,
-    options?: Omit<UseStoreMultiOptions<TState, any>, 'transformer'> & { transformer?: never }
+    options?: Omit<UseStoreMultiOptions<TState, any>, 'transformer'> & {
+      transformer?: never;
+    }
   ): [PathOrFnValues<TState, Entries>, ...PathOrFnSetters<TState, Entries>];
 
   function useStore<const Entries extends ReadonlyArray<PathOrFn<TState>>, TResult>(

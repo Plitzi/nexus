@@ -37,7 +37,12 @@ const emit = () => {
 
 export const registerDevStore = (store: StoreApi<any>, scopeId?: string, name?: string): (() => void) => {
   const devStore = store as DevStore;
-  entries.set(devStore, { uid: `dev-store-${++uidSeq}`, store: devStore, scopeId, name });
+  entries.set(devStore, {
+    uid: `dev-store-${++uidSeq}`,
+    store: devStore,
+    scopeId,
+    name
+  });
   emit();
 
   return () => {

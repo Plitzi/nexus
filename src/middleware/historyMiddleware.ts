@@ -60,7 +60,10 @@ const findChangedLeaf = (prev: unknown, next: unknown, depth = 12): { path: stri
 
     const deeper = findChangedLeaf(prev[key], next[key], depth - 1);
     if (deeper) {
-      return { path: deeper.path ? `${key}.${deeper.path}` : key, value: deeper.value };
+      return {
+        path: deeper.path ? `${key}.${deeper.path}` : key,
+        value: deeper.value
+      };
     }
   }
 

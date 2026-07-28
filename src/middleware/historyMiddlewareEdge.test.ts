@@ -19,7 +19,9 @@ const enableHistory = <T extends object>(store: StoreApi<T>): StoreHistory<T> =>
 };
 
 const make = (options?: StoreHistoryOptions) => {
-  const store = createStore<S>(initial(), { middlewares: [historyMiddleware<S>(options)] });
+  const store = createStore<S>(initial(), {
+    middlewares: [historyMiddleware<S>(options)]
+  });
 
   return { store, history: enableHistory(store) };
 };
@@ -62,7 +64,9 @@ describe('historyMiddleware — edge cases', () => {
   });
 
   it('respects a shouldRecord filter', () => {
-    const { store, history } = make({ shouldRecord: changed => changed !== 'count' });
+    const { store, history } = make({
+      shouldRecord: changed => changed !== 'count'
+    });
 
     store.setState('count', 1);
     expect(history.getSnapshot().entries.length).toBe(1);
@@ -109,7 +113,9 @@ describe('historyMiddleware — edge cases', () => {
 
 describe('getStoreHistory', () => {
   it('returns one shared instance per store', () => {
-    const store = createStore<S>(initial(), { middlewares: [historyMiddleware<S>()] });
+    const store = createStore<S>(initial(), {
+      middlewares: [historyMiddleware<S>()]
+    });
 
     expect(getStoreHistory(store)).toBe(getStoreHistory(store));
   });

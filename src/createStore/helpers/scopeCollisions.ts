@@ -7,7 +7,9 @@
 
 import { isTest } from '../../env';
 
-export type ScopeClaims = { claimDelegatedWrite: (path: string, scopeId: number) => void };
+export type ScopeClaims = {
+  claimDelegatedWrite: (path: string, scopeId: number) => void;
+};
 
 const collisionMessage = (path: string) =>
   '@plitzi/nexus: scope collision — two sibling scopes under the same parent both delegate a write to ' +

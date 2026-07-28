@@ -24,9 +24,15 @@ const wrapper = ({ children }: { children: ReactNode }) =>
 
 describe('store registry: reach an ancestor store by id across a disconnected provider', () => {
   it('reads the named ancestor via storeId, and the nearest store otherwise', () => {
-    const { result } = renderHook(() => ({ rootA: useStore('a', { storeId: 'root' })[0], innerB: useStore('b')[0] }), {
-      wrapper
-    });
+    const { result } = renderHook(
+      () => ({
+        rootA: useStore('a', { storeId: 'root' })[0],
+        innerB: useStore('b')[0]
+      }),
+      {
+        wrapper
+      }
+    );
 
     expect(result.current.rootA).toBe(1);
     expect(result.current.innerB).toBe(2);
@@ -46,7 +52,9 @@ describe('store registry: reach an ancestor store by id across a disconnected pr
   });
 
   it('reacts to updates written to the ancestor store reached by id', () => {
-    const { result } = renderHook(() => useStore('a', { storeId: 'root' }), { wrapper });
+    const { result } = renderHook(() => useStore('a', { storeId: 'root' }), {
+      wrapper
+    });
 
     expect(result.current[0]).toBe(1);
     act(() => result.current[1](5));

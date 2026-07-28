@@ -36,7 +36,9 @@ describe.each([
 
   it('resolves an updater function against the previous leaf', () => {
     setup();
-    const next = write({ a: { b: 10 } }, 'a.b', (p: number) => p + 1, true) as { a: { b: number } };
+    const next = write({ a: { b: 10 } }, 'a.b', (p: number) => p + 1, true) as {
+      a: { b: number };
+    };
 
     expect(next.a.b).toBe(11);
   });
@@ -82,7 +84,9 @@ describe('writeByPath SSR behaviour', () => {
 
     setCodegenEnabled(undefined); // reset to auto-detect
     const obj = { a: { b: 1 } };
-    const result = writeByPath(obj, 'a.b', ['a', 'b'], 2, false) as { a: { b: number } };
+    const result = writeByPath(obj, 'a.b', ['a', 'b'], 2, false) as {
+      a: { b: number };
+    };
 
     expect(result.a.b).toBe(2);
     // Should have used the recursive fallback, which produces a correct result
@@ -93,7 +97,9 @@ describe('writeByPath SSR behaviour', () => {
   it('still uses codegen when window exists (browser)', () => {
     setCodegenEnabled(true);
     const obj = { a: { b: 1 } };
-    const result = writeByPath(obj, 'a.b', ['a', 'b'], 2, false) as { a: { b: number } };
+    const result = writeByPath(obj, 'a.b', ['a', 'b'], 2, false) as {
+      a: { b: number };
+    };
 
     expect(result.a.b).toBe(2);
   });
@@ -104,7 +110,9 @@ describe('writeByPath SSR behaviour', () => {
 
     setCodegenEnabled(true); // force codegen
     const obj = { a: { b: 1 } };
-    const result = writeByPath(obj, 'a.b', ['a', 'b'], 2, false) as { a: { b: number } };
+    const result = writeByPath(obj, 'a.b', ['a', 'b'], 2, false) as {
+      a: { b: number };
+    };
 
     expect(result.a.b).toBe(2);
 

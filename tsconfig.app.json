@@ -1,9 +1,29 @@
 {
-  "extends": "../sdk-shared/tsconfig.app.json",
-  "references": [{ "path": "../sdk-shared" }],
+  "extends": "./tsconfig.json",
   "compilerOptions": {
+    "allowJs": true,
+    "maxNodeModuleJsDepth": 5,
+    "composite": true,
+    "target": "ES2023",
+    "useDefineForClassFields": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "emitDeclarationOnly": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "resolveJsonModule": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
     "rootDir": "./",
     "outDir": "./dist"
   },
-  "include": ["src", "**/*.json"]
+  "include": ["src", "package.json", "vite.config.ts"],
+  "exclude": ["dist", "node_modules", "**/dist"]
 }

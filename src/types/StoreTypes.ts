@@ -68,7 +68,13 @@ export type StoreHookReactiveOptions<T, TState extends object = object> = StoreH
 // `prevValue`/`nextValue` are the value AT `path` before/after (the whole state when `path` is undefined), so an
 // observer never has to re-walk the path out of `prev`/`next`. Typed `unknown` because the value's shape depends on
 // the runtime `path`.
-export type StoreChange<T> = { path: PathOf<T> | undefined; prev: T; next: T; prevValue: unknown; nextValue: unknown };
+export type StoreChange<T> = {
+  path: PathOf<T> | undefined;
+  prev: T;
+  next: T;
+  prevValue: unknown;
+  nextValue: unknown;
+};
 
 // Observer of committed changes — the substrate logger, history and persist all ride on. Returned by a middleware.
 export type ChangeListener<T> = (change: StoreChange<T>) => void;
@@ -117,7 +123,6 @@ export type StoreMiddlewareHandlers<T> = {
 
 // Set up once after the store is created (the body may hydrate via `api.setState`). Returns the change handler to
 // register, or nothing for a pure side-effect middleware.
-// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 export type StoreMiddleware<T extends object> = (api: StoreApi<T>) => StoreMiddlewareHandlers<T> | void;
 
 // Shared base for every built-in middleware's options. `enabled` false (or a predicate that resolves false at setup)

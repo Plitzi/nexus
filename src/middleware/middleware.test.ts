@@ -18,7 +18,10 @@ const memoryStorage = () => {
   return { storage, data };
 };
 
-type StoredEnvelope = { version: number; state: { count?: number; ui?: { open: boolean } } };
+type StoredEnvelope = {
+  version: number;
+  state: { count?: number; ui?: { open: boolean } };
+};
 const readStored = (data: Map<string, string>, key: string): StoredEnvelope =>
   JSON.parse(data.get(key) ?? 'null') as StoredEnvelope;
 
@@ -28,7 +31,9 @@ const initial = (): AppState => ({ count: 0, ui: { open: false } });
 describe('logger middleware', () => {
   it('reports each committed change with prev/next snapshots', () => {
     const changes: StoreChange<AppState>[] = [];
-    const store = createStore<AppState>(initial(), { middlewares: [loggerMiddleware({ sink: c => changes.push(c) })] });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [loggerMiddleware({ sink: c => changes.push(c) })]
+    });
 
     store.setState('count', 1);
 
@@ -45,21 +50,31 @@ describe('logger middleware', () => {
 
   it('carries the value at the changed path', () => {
     const changes: StoreChange<AppState>[] = [];
-    const store = createStore<AppState>(initial(), { middlewares: [loggerMiddleware({ sink: c => changes.push(c) })] });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [loggerMiddleware({ sink: c => changes.push(c) })]
+    });
 
     store.setState('ui.open', true);
     store.setState(undefined, { count: 9, ui: { open: false } });
 
     expect(changes.map(c => ({ prevValue: c.prevValue, nextValue: c.nextValue }))).toEqual([
       { prevValue: false, nextValue: true },
-      { prevValue: { count: 0, ui: { open: true } }, nextValue: { count: 9, ui: { open: false } } }
+      {
+        prevValue: { count: 0, ui: { open: true } },
+        nextValue: { count: 9, ui: { open: false } }
+      }
     ]);
   });
 
   it('honours a filter', () => {
     const changes: StoreChange<AppState>[] = [];
     const store = createStore<AppState>(initial(), {
-      middlewares: [loggerMiddleware({ filter: c => c.path === 'count', sink: c => changes.push(c) })]
+      middlewares: [
+        loggerMiddleware({
+          filter: c => c.path === 'count',
+          sink: c => changes.push(c)
+        })
+      ]
     });
 
     store.setState('ui.open', true);
@@ -70,7 +85,9 @@ describe('logger middleware', () => {
 
   it('accepts a bare sink function', () => {
     const changes: StoreChange<AppState>[] = [];
-    const store = createStore<AppState>(initial(), { middlewares: [loggerMiddleware(c => changes.push(c))] });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [loggerMiddleware(c => changes.push(c))]
+    });
 
     store.setState('count', 1);
 
@@ -81,21 +98,27 @@ describe('logger middleware', () => {
 describe('persist middleware', () => {
   it('writes committed state to storage', () => {
     const { storage, data } = memoryStorage();
-    const store = createStore<AppState>(initial(), { middlewares: [persistMiddleware({ key: 'app', storage })] });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [persistMiddleware({ key: 'app', storage })]
+    });
 
     store.setState('count', 7);
 
-    expect(readStored(data, 'app')).toEqual({ version: 0, state: { count: 7, ui: { open: false } } });
+    expect(readStored(data, 'app')).toEqual({
+      version: 0,
+      state: { count: 7, ui: { open: false } }
+    });
   });
 
   it('rehydrates a new store from storage', () => {
     const { storage } = memoryStorage();
-    createStore<AppState>(initial(), { middlewares: [persistMiddleware({ key: 'app', storage })] }).setState(
-      'count',
-      9
-    );
+    createStore<AppState>(initial(), {
+      middlewares: [persistMiddleware({ key: 'app', storage })]
+    }).setState('count', 9);
 
-    const restored = createStore<AppState>(initial(), { middlewares: [persistMiddleware({ key: 'app', storage })] });
+    const restored = createStore<AppState>(initial(), {
+      middlewares: [persistMiddleware({ key: 'app', storage })]
+    });
 
     expect(restored.getState().count).toBe(9);
   });
@@ -103,7 +126,13 @@ describe('persist middleware', () => {
   it('persists only the partialized slice', () => {
     const { storage, data } = memoryStorage();
     const store = createStore<AppState>(initial(), {
-      middlewares: [persistMiddleware({ key: 'app', storage, partialize: s => ({ count: s.count }) })]
+      middlewares: [
+        persistMiddleware({
+          key: 'app',
+          storage,
+          partialize: s => ({ count: s.count })
+        })
+      ]
     });
 
     store.setState('ui.open', true);
@@ -133,7 +162,9 @@ describe('persist middleware', () => {
     const { storage, data } = memoryStorage();
     data.set('app', '{not json');
 
-    const store = createStore<AppState>(initial(), { middlewares: [persistMiddleware({ key: 'app', storage })] });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [persistMiddleware({ key: 'app', storage })]
+    });
 
     expect(store.getState().count).toBe(0);
     expect(data.has('app')).toBe(false);
@@ -162,7 +193,12 @@ describe('enabled control', () => {
   it('resolves a predicate against initial state at setup', () => {
     const off: StoreChange<AppState>[] = [];
     const offStore = createStore<AppState>(initial(), {
-      middlewares: [loggerMiddleware({ sink: c => off.push(c), enabled: s => s.ui.open })]
+      middlewares: [
+        loggerMiddleware({
+          sink: c => off.push(c),
+          enabled: s => s.ui.open
+        })
+      ]
     });
 
     offStore.setState('count', 1);
@@ -172,7 +208,14 @@ describe('enabled control', () => {
     const on: StoreChange<AppState>[] = [];
     const onStore = createStore<AppState>(
       { count: 0, ui: { open: true } },
-      { middlewares: [loggerMiddleware({ sink: c => on.push(c), enabled: s => s.ui.open })] }
+      {
+        middlewares: [
+          loggerMiddleware({
+            sink: c => on.push(c),
+            enabled: s => s.ui.open
+          })
+        ]
+      }
     );
 
     onStore.setState('count', 1);
@@ -187,7 +230,9 @@ describe('persist storage targets', () => {
   });
 
   it('defaults to localStorage and supports sessionStorage', () => {
-    createStore<AppState>(initial(), { middlewares: [persistMiddleware({ key: 'local-app' })] }).setState('count', 1);
+    createStore<AppState>(initial(), {
+      middlewares: [persistMiddleware({ key: 'local-app' })]
+    }).setState('count', 1);
     createStore<AppState>(initial(), {
       middlewares: [persistMiddleware({ key: 'session-app', storage: 'session' })]
     }).setState('count', 2);
@@ -202,7 +247,14 @@ describe('persist storage targets', () => {
     type Toggled = AppState & { useSession: boolean };
     const store = createStore<Toggled>(
       { ...initial(), useSession: false },
-      { middlewares: [persistMiddleware<Toggled>({ key: 'dyn', storage: s => (s.useSession ? 'session' : 'local') })] }
+      {
+        middlewares: [
+          persistMiddleware<Toggled>({
+            key: 'dyn',
+            storage: s => (s.useSession ? 'session' : 'local')
+          })
+        ]
+      }
     );
 
     store.setState('count', 1);
@@ -218,7 +270,14 @@ describe('persist storage targets', () => {
     type Gated = AppState & { persistOn: boolean };
     const store = createStore<Gated>(
       { ...initial(), persistOn: false },
-      { middlewares: [persistMiddleware<Gated>({ key: 'gated', storage: s => (s.persistOn ? 'local' : false) })] }
+      {
+        middlewares: [
+          persistMiddleware<Gated>({
+            key: 'gated',
+            storage: s => (s.persistOn ? 'local' : false)
+          })
+        ]
+      }
     );
 
     store.setState('count', 1);
@@ -257,8 +316,14 @@ describe('persist storage targets', () => {
     const localDesc = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
     const sessionDesc = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
     // Simulate a server environment: no Web Storage at all.
-    Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: undefined });
-    Object.defineProperty(globalThis, 'sessionStorage', { configurable: true, value: undefined });
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: undefined
+    });
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      configurable: true,
+      value: undefined
+    });
 
     try {
       const changes: StoreChange<AppState>[] = [];
@@ -271,7 +336,13 @@ describe('persist storage targets', () => {
 
       // Dynamic target: registers, but hydrate and writes no-op because the storage never resolves.
       const dynamicStore = createStore<AppState>(initial(), {
-        middlewares: [persistMiddleware<AppState>({ key: 'b', paths: ['count'], storage: () => 'local' })]
+        middlewares: [
+          persistMiddleware<AppState>({
+            key: 'b',
+            paths: ['count'],
+            storage: () => 'local'
+          })
+        ]
       });
       dynamicStore.hydrate?.();
       expect(() => dynamicStore.setState('count', 2)).not.toThrow();
@@ -316,7 +387,11 @@ describe('persist path fragments', () => {
       { ...initial(), ready: false },
       {
         middlewares: [
-          persistMiddleware<Gated>({ key: 'app', paths: ['count'], storage: s => (s.ready ? storage : false) })
+          persistMiddleware<Gated>({
+            key: 'app',
+            paths: ['count'],
+            storage: s => (s.ready ? storage : false)
+          })
         ]
       }
     );
@@ -346,10 +421,9 @@ describe('persist path fragments', () => {
 describe('middleware ordering', () => {
   it('a persist placed first hydrates before later middlewares observe', () => {
     const { storage } = memoryStorage();
-    createStore<AppState>(initial(), { middlewares: [persistMiddleware({ key: 'app', storage })] }).setState(
-      'count',
-      4
-    );
+    createStore<AppState>(initial(), {
+      middlewares: [persistMiddleware({ key: 'app', storage })]
+    }).setState('count', 4);
 
     const seen: (number | undefined)[] = [];
     const store = createStore<AppState>(initial(), {

@@ -378,7 +378,10 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       const owns = dot === -1 ? Object.hasOwn(prevState, path) : ownsPath(prevState, parsePath(path));
       if (!owns) {
         onDelegateToParent?.(path);
-        parent.setState(path, value as PathValue<TState, P>, { canPropagate, unmount });
+        parent.setState(path, value as PathValue<TState, P>, {
+          canPropagate,
+          unmount
+        });
 
         return;
       }

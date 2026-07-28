@@ -53,9 +53,10 @@ export function bindServerAction<TState extends object, P extends PathOf<TState>
       if (revalidate) {
         const nextModuleName = 'next/cache';
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const nextCache: { revalidatePath: (p: string) => void; revalidateTag: (t: string) => void } = await import(
-          nextModuleName
-        );
+        const nextCache: {
+          revalidatePath: (p: string) => void;
+          revalidateTag: (t: string) => void;
+        } = await import(nextModuleName);
 
         if (options.revalidatePath) {
           nextCache.revalidatePath(options.revalidatePath);

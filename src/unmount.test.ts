@@ -8,7 +8,10 @@ import type { StoreChange } from './types';
 describe('setState unmount', () => {
   describe('single-segment', () => {
     it('removes the key entirely instead of leaving it undefined', () => {
-      const store = createStore<Record<string, unknown>>(() => ({ a: 1, b: 2 }));
+      const store = createStore<Record<string, unknown>>(() => ({
+        a: 1,
+        b: 2
+      }));
 
       store.setState('a', undefined, { unmount: true });
 
@@ -44,7 +47,9 @@ describe('setState unmount', () => {
 
   describe('multi-segment', () => {
     it('removes a nested leaf and keeps its siblings', () => {
-      const store = createStore<{ a: { b?: number; c: number } }>(() => ({ a: { b: 1, c: 2 } }));
+      const store = createStore<{ a: { b?: number; c: number } }>(() => ({
+        a: { b: 1, c: 2 }
+      }));
 
       store.setState('a.b', undefined, { unmount: true });
 
@@ -77,7 +82,9 @@ describe('setState unmount', () => {
     });
 
     it('splices an array index out rather than leaving a hole', () => {
-      const store = createStore<{ list: Array<number | undefined> }>(() => ({ list: [10, 20, 30] }));
+      const store = createStore<{ list: Array<number | undefined> }>(() => ({
+        list: [10, 20, 30]
+      }));
 
       store.setState('list.1', undefined, { unmount: true });
 
@@ -125,7 +132,11 @@ describe('setState unmount', () => {
   describe('interceptors', () => {
     it('lets a beforeChange interceptor veto the removal', () => {
       const store = createStore<Record<string, unknown>>(() => ({ a: 1 }), {
-        middlewares: [() => ({ beforeChange: ({ path }) => (path === 'a' ? CANCEL : undefined) })]
+        middlewares: [
+          () => ({
+            beforeChange: ({ path }) => (path === 'a' ? CANCEL : undefined)
+          })
+        ]
       });
 
       store.setState('a', undefined, { unmount: true });
@@ -137,7 +148,9 @@ describe('setState unmount', () => {
   describe('scoped stores', () => {
     it('delegates an unmount up to the owning parent (source registry pattern)', () => {
       type State = { sources: Record<string, { id: string } | undefined> };
-      const parent = createStore<State>(() => ({ sources: { s1: { id: 's1' } } }));
+      const parent = createStore<State>(() => ({
+        sources: { s1: { id: 's1' } }
+      }));
       const child = createStore<State>(() => ({}), { parent });
 
       child.setState('sources.s1', undefined, { unmount: true });
@@ -160,7 +173,10 @@ describe('setState unmount', () => {
     });
 
     it('ignores unmount for a whole-state write (path undefined)', () => {
-      const store = createStore<{ a: number; b: number }>(() => ({ a: 1, b: 2 }));
+      const store = createStore<{ a: number; b: number }>(() => ({
+        a: 1,
+        b: 2
+      }));
 
       store.setState(undefined, { a: 9, b: 8 }, { unmount: true });
 
@@ -182,7 +198,9 @@ describe('setState unmount', () => {
     });
 
     it('recreates a nested leaf removed by unmount, keeping siblings', () => {
-      const store = createStore<{ a: { b?: number; c: number } }>(() => ({ a: { b: 1, c: 2 } }));
+      const store = createStore<{ a: { b?: number; c: number } }>(() => ({
+        a: { b: 1, c: 2 }
+      }));
 
       store.setState('a.b', undefined, { unmount: true });
       store.setState('a.b', 9);
@@ -191,7 +209,9 @@ describe('setState unmount', () => {
     });
 
     it('rebuilds an intermediate container that unmount had emptied', () => {
-      const store = createStore<{ a?: { b?: number } }>(() => ({ a: { b: 1 } }));
+      const store = createStore<{ a?: { b?: number } }>(() => ({
+        a: { b: 1 }
+      }));
 
       store.setState('a.b', undefined, { unmount: true });
       expect(store.getState().a).toEqual({});

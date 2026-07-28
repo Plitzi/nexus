@@ -80,7 +80,7 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
 
       - name: Yarn Build
-        run: yarn build:prod && yarn build-vendor:dev && yarn build-vendor:prod
+        run: yarn build:prod
 
   lint:
     needs: build-packages
@@ -121,9 +121,6 @@ jobs:
 
       - name: Yarn Lint
         run: yarn lint
-
-      - name: Yarn Scss Lint
-        run: yarn lint-style
 
       - name: Yarn Typecheck
         run: yarn typecheck

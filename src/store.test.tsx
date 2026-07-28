@@ -157,7 +157,10 @@ describe('store', () => {
 
     it('stays on codegen when the first child level has few keys', () => {
       type NestedState = { a: { b: { c: number; d: string } }; other: number };
-      const store = createStore<NestedState>(() => ({ a: { b: { c: 1, d: 'x' } }, other: 0 }));
+      const store = createStore<NestedState>(() => ({
+        a: { b: { c: 1, d: 'x' } },
+        other: 0
+      }));
 
       store.setState('a.b.c', 99);
       expect(store.getState().a.b.c).toBe(99);
@@ -174,7 +177,10 @@ describe('store', () => {
 
     it('returns plain objects from getState() when using codegen', () => {
       type NestedState = { a: { b: { c: number; d: string } }; other: number };
-      const store = createStore<NestedState>(() => ({ a: { b: { c: 1, d: 'x' } }, other: 0 }));
+      const store = createStore<NestedState>(() => ({
+        a: { b: { c: 1, d: 'x' } },
+        other: 0
+      }));
 
       store.setState('a.b.c', 99);
 
@@ -185,7 +191,10 @@ describe('store', () => {
     });
 
     it('handles independent wide and narrow paths under the same root', () => {
-      type MixedState = { wide: Record<string, number>; nested: { x: { y: number } } };
+      type MixedState = {
+        wide: Record<string, number>;
+        nested: { x: { y: number } };
+      };
       const store = createStore<MixedState>(() => ({
         wide: { k0: 0, k1: 1, k2: 2, k3: 3, k4: 4, k5: 5 },
         nested: { x: { y: 10 } }
@@ -286,7 +295,9 @@ describe('store', () => {
 
     it('stays on codegen when the first child level has exactly 5 keys', () => {
       type WideKeys = { items: Record<string, number> };
-      const store = createStore<WideKeys>(() => ({ items: { k0: 0, k1: 1, k2: 2, k3: 3, k4: 4 } }));
+      const store = createStore<WideKeys>(() => ({
+        items: { k0: 0, k1: 1, k2: 2, k3: 3, k4: 4 }
+      }));
 
       store.setState('items.k0', 99);
       store.setState('items.k1', 88);
@@ -572,7 +583,9 @@ describe('store enabled / options', () => {
       const store = makeStore();
       let arg: PathOf<AppState> | ReadonlyArray<PathOf<AppState>> = 'count';
 
-      const { result, rerender } = renderHook(() => useStoreDynamic(arg), { wrapper: makeWrapper(store) });
+      const { result, rerender } = renderHook(() => useStoreDynamic(arg), {
+        wrapper: makeWrapper(store)
+      });
 
       expect(result.current[0]).toBe(0);
 
@@ -589,7 +602,9 @@ describe('store enabled / options', () => {
       const store = makeStore();
       let arg: PathOf<AppState> | ReadonlyArray<PathOf<AppState>> = 'count';
 
-      const { result, rerender } = renderHook(() => useStoreDynamic(arg), { wrapper: makeWrapper(store) });
+      const { result, rerender } = renderHook(() => useStoreDynamic(arg), {
+        wrapper: makeWrapper(store)
+      });
 
       arg = ['count', 'user.name'];
       rerender();
@@ -630,7 +645,12 @@ describe('store enabled / options', () => {
         { wrapper: makeWrapper(store) }
       );
 
-      act(() => store.setState(`schema.flat.${id}` as PathOf<AppState>, { label: 'Updated', type: 'button' }));
+      act(() =>
+        store.setState(`schema.flat.${id}` as PathOf<AppState>, {
+          label: 'Updated',
+          type: 'button'
+        })
+      );
 
       expect(renderFn).toHaveBeenCalledTimes(2);
     });
@@ -648,7 +668,12 @@ describe('store enabled / options', () => {
       );
 
       // Change txt1, not btn1
-      act(() => store.setState('schema.flat.txt1' as PathOf<AppState>, { label: 'Changed', type: 'text' }));
+      act(() =>
+        store.setState('schema.flat.txt1' as PathOf<AppState>, {
+          label: 'Changed',
+          type: 'text'
+        })
+      );
 
       expect(renderFn).toHaveBeenCalledTimes(1);
     });
@@ -886,7 +911,11 @@ describe('store enabled / options', () => {
       let externalValue = 0;
 
       const { rerender } = renderHook(
-        () => useStoreSync('count', externalValue, { mode: 'sync', syncStrategy: 'afterRender' }),
+        () =>
+          useStoreSync('count', externalValue, {
+            mode: 'sync',
+            syncStrategy: 'afterRender'
+          }),
         { wrapper: makeWrapper(store) }
       );
 
@@ -899,7 +928,9 @@ describe('store enabled / options', () => {
     it('disabled: does not sync on mount', () => {
       const store = makeStore();
 
-      renderHook(() => useStoreSync('count', 99, { enabled: false }), { wrapper: makeWrapper(store) });
+      renderHook(() => useStoreSync('count', 99, { enabled: false }), {
+        wrapper: makeWrapper(store)
+      });
 
       expect(store.getState().count).toBe(0); // untouched
     });
@@ -999,7 +1030,9 @@ describe('store enabled / options', () => {
       const store = makeStore();
       let enabled = true;
 
-      const { rerender } = renderHook(() => useStore('count', { enabled }), { wrapper: makeWrapper(store) });
+      const { rerender } = renderHook(() => useStore('count', { enabled }), {
+        wrapper: makeWrapper(store)
+      });
 
       for (let i = 0; i < 20; i++) {
         enabled = i % 2 === 0;
@@ -1324,7 +1357,11 @@ describe('performance', () => {
     nested: { a: { b: { c: 42 } } }
   };
 
-  const makeStore = () => createStore<PerfState>(() => ({ ...initialState, items: [...initialState.items] }));
+  const makeStore = () =>
+    createStore<PerfState>(() => ({
+      ...initialState,
+      items: [...initialState.items]
+    }));
 
   const makeWrapper =
     (store: StoreApi<PerfState>) =>
@@ -1401,7 +1438,9 @@ describe('performance', () => {
 
       renderHook(
         () => {
-          const [user] = useStore('user', { equalityFn: (a, b) => a.name === b.name && a.age === b.age });
+          const [user] = useStore('user', {
+            equalityFn: (a, b) => a.name === b.name && a.age === b.age
+          });
           renderFn();
           return user;
         },
@@ -1613,7 +1652,9 @@ describe('performance', () => {
       const paths = ['count', 'user.name', 'user.age'] as const;
 
       const hooks = Array.from({ length: 500 }, (_, i) =>
-        renderHook(() => useStore(paths[i % paths.length]), { wrapper: makeWrapper(store) })
+        renderHook(() => useStore(paths[i % paths.length]), {
+          wrapper: makeWrapper(store)
+        })
       );
 
       const elapsed = measure('500 hooks × 100 updates', () => {
@@ -2037,7 +2078,9 @@ describe('useStore (multi-path)', () => {
   it('returns values for multiple paths', () => {
     const store = makeStore();
 
-    const { result } = renderHook(() => useStore(['user.name', 'count']), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStore(['user.name', 'count']), {
+      wrapper: makeWrapper(store)
+    });
 
     expect(result.current[0]).toEqual(['Carlos', 0]);
   });
@@ -2045,8 +2088,11 @@ describe('useStore (multi-path)', () => {
   it('returns values for multiple paths with invalid paths', () => {
     const store = makeStore();
 
-    // @ts-expect-error // eslint-disable-line
-    const { result } = renderHook(() => useStore(['user.name', 'count', 'blah']), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(
+      // @ts-expect-error -- invalid path should return undefined
+      () => useStore(['user.name', 'count', 'blah']),
+      { wrapper: makeWrapper(store) }
+    );
 
     expect(result.current[0]).toEqual(['Carlos', 0, undefined]);
   });
@@ -2203,7 +2249,9 @@ describe('useStore (multi-path)', () => {
   it('setters update independently', () => {
     const store = makeStore();
 
-    const { result } = renderHook(() => useStore(['user.name', 'count']), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStore(['user.name', 'count']), {
+      wrapper: makeWrapper(store)
+    });
 
     const [, setName, setCount] = result.current;
 
@@ -2238,7 +2286,9 @@ describe('useStore (multi-path)', () => {
   it('returns same reference if values did not change', () => {
     const store = makeStore();
 
-    const { result } = renderHook(() => useStore(['user.name', 'count']), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStore(['user.name', 'count']), {
+      wrapper: makeWrapper(store)
+    });
 
     const first = result.current[0];
 
@@ -2282,7 +2332,10 @@ describe('logger middleware', () => {
     store.setState(undefined, { count: 99, user: { name: 'Bob' } });
 
     expect(logger).toHaveBeenCalledWith(
-      expect.objectContaining({ path: undefined, next: { count: 99, user: { name: 'Bob' } } })
+      expect.objectContaining({
+        path: undefined,
+        next: { count: 99, user: { name: 'Bob' } }
+      })
     );
   });
 

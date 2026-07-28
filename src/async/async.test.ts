@@ -22,7 +22,12 @@ describe('createAsync', () => {
     const store = createStore<State>(initial());
     const resource = createAsync(store, 'value', (n: number) => Promise.resolve(n * 2));
 
-    expect(resource.get()).toEqual({ status: 'idle', data: 0, error: undefined, isLoading: false });
+    expect(resource.get()).toEqual({
+      status: 'idle',
+      data: 0,
+      error: undefined,
+      isLoading: false
+    });
     expect(resource.suspend()).toBeUndefined();
   });
 
@@ -34,7 +39,12 @@ describe('createAsync', () => {
 
     expect(result).toBe(42);
     expect(store.getState().value).toBe(42);
-    expect(resource.get()).toEqual({ status: 'success', data: 42, error: undefined, isLoading: false });
+    expect(resource.get()).toEqual({
+      status: 'success',
+      data: 42,
+      error: undefined,
+      isLoading: false
+    });
   });
 
   it('goes pending while in flight and back once settled', async () => {

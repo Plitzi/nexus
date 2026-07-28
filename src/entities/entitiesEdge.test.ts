@@ -65,7 +65,9 @@ describe('createEntityAdapter — edge cases', () => {
   });
 
   it('orders selectAll / selectIds by the sortComparer', () => {
-    const adapter = createEntityAdapter<Item>({ sortComparer: (x, y) => x.rank - y.rank });
+    const adapter = createEntityAdapter<Item>({
+      sortComparer: (x, y) => x.rank - y.rank
+    });
     const map = items(a, b, c);
 
     expect(adapter.selectAll(map).map(item => item.name)).toEqual(['beta', 'gamma', 'alpha']);
@@ -75,7 +77,11 @@ describe('createEntityAdapter — edge cases', () => {
   it('keeps insertion order for selectIds without a comparer (non-numeric ids)', () => {
     type Row = { id: string };
     const adapter = createEntityAdapter<Row>();
-    const map = { gamma: { id: 'gamma' }, alpha: { id: 'alpha' }, beta: { id: 'beta' } };
+    const map = {
+      gamma: { id: 'gamma' },
+      alpha: { id: 'alpha' },
+      beta: { id: 'beta' }
+    };
 
     // Integer-like keys are reordered numerically by the JS engine, so insertion order only holds for string ids.
     expect(adapter.selectIds(map)).toEqual(['gamma', 'alpha', 'beta']);

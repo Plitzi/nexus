@@ -22,7 +22,9 @@ const makeStore = () => createStore<S>({ count: 0 }, { middlewares: [historyMidd
 describe('useStoreHistory', () => {
   it('records changes and drives undo / redo reactively', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreHistory<S>(), { wrapper: wrapper(store) });
+    const { result } = renderHook(() => useStoreHistory<S>(), {
+      wrapper: wrapper(store)
+    });
 
     expect(result.current.canUndo).toBe(false);
 
@@ -42,7 +44,9 @@ describe('useStoreHistory', () => {
 
   it('jumps to any snapshot with travelTo and resets with clear', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreHistory<S>(), { wrapper: wrapper(store) });
+    const { result } = renderHook(() => useStoreHistory<S>(), {
+      wrapper: wrapper(store)
+    });
 
     act(() => store.setState('count', 1));
     act(() => store.setState('count', 2));
@@ -58,7 +62,9 @@ describe('useStoreHistory', () => {
   it('returns an empty, no-op view and warns when no historyMiddleware is attached', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const store = createStore<S>({ count: 0 });
-    const { result } = renderHook(() => useStoreHistory<S>(), { wrapper: wrapper(store) });
+    const { result } = renderHook(() => useStoreHistory<S>(), {
+      wrapper: wrapper(store)
+    });
 
     act(() => store.setState('count', 1));
 

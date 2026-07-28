@@ -42,42 +42,57 @@ const makeWrapper =
 describe('useStoreGetter — basic reads (no base path)', () => {
   it('getValue() returns full state', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStoreGetter<AppState>(), {
+      wrapper: makeWrapper(store)
+    });
 
     expect(result.current()).toEqual(store.getState());
   });
 
   it('getValue("count") returns primitive path value', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStoreGetter<AppState>(), {
+      wrapper: makeWrapper(store)
+    });
 
     expect(result.current('count')).toBe(0);
   });
 
   it('getValue("user.name") returns nested path value', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStoreGetter<AppState>(), {
+      wrapper: makeWrapper(store)
+    });
 
     expect(result.current('user.name')).toBe('Alice');
   });
 
   it('getValue("schema.flat") returns nested object', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStoreGetter<AppState>(), {
+      wrapper: makeWrapper(store)
+    });
 
     expect(result.current('schema.flat')).toEqual(store.getState().schema.flat);
   });
 
   it('getValue("schema.flat.btn1") returns deep dynamic path value', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStoreGetter<AppState>(), {
+      wrapper: makeWrapper(store)
+    });
 
-    expect(result.current('schema.flat.btn1' as 'schema.flat')).toEqual({ label: 'Button', type: 'button' });
+    expect(result.current('schema.flat.btn1' as 'schema.flat')).toEqual({
+      label: 'Button',
+      type: 'button'
+    });
   });
 
   it('getValue with nonexistent path returns undefined', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStoreGetter<AppState>(), {
+      wrapper: makeWrapper(store)
+    });
 
     // schema.flat is Record<string, ...> so any string key is valid in the type
     expect(result.current('schema.flat.nonexistent' as 'schema.flat')).toBeUndefined();
@@ -159,7 +174,9 @@ describe('useStoreGetter — reads with base path', () => {
 describe('useStoreGetter — reads current state (no stale closure)', () => {
   it('getValue() returns updated state after setState without re-render', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStoreGetter<AppState>(), {
+      wrapper: makeWrapper(store)
+    });
 
     store.setState('count', 42);
 
@@ -200,7 +217,10 @@ describe('useStoreGetter — reads current state (no stale closure)', () => {
     act(() =>
       store.setState(
         'schema.flat.btn1' as 'schema.flat',
-        { label: 'Updated', type: 'button' } as unknown as AppState['schema']['flat']
+        {
+          label: 'Updated',
+          type: 'button'
+        } as unknown as AppState['schema']['flat']
       )
     );
 
@@ -209,7 +229,9 @@ describe('useStoreGetter — reads current state (no stale closure)', () => {
 
   it('getValue reads fresh value after setState with updater function', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStoreGetter<AppState>(), {
+      wrapper: makeWrapper(store)
+    });
 
     store.setState('count', prev => prev + 10);
 
@@ -253,7 +275,10 @@ describe('useStoreGetter — no re-renders', () => {
     act(() =>
       store.setState(
         'schema.flat.btn1' as 'schema.flat',
-        { label: 'Changed', type: 'button' } as unknown as AppState['schema']['flat']
+        {
+          label: 'Changed',
+          type: 'button'
+        } as unknown as AppState['schema']['flat']
       )
     );
 
@@ -371,7 +396,9 @@ describe('useStoreGetter — memory / cleanup (no subscriptions)', () => {
   it('store.listeners.length is 0 after mounting useStoreGetter()', () => {
     const store = makeStore() as StoreApiInternal<AppState>;
 
-    renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
+    renderHook(() => useStoreGetter<AppState>(), {
+      wrapper: makeWrapper(store)
+    });
 
     expect(store.listeners.length).toBe(0);
   });
@@ -379,7 +406,9 @@ describe('useStoreGetter — memory / cleanup (no subscriptions)', () => {
   it('store.pathListeners has no entry for base path after mounting useStoreGetter("count")', () => {
     const store = makeStore() as StoreApiInternal<AppState>;
 
-    renderHook(() => useStoreGetter<AppState, 'count'>('count'), { wrapper: makeWrapper(store) });
+    renderHook(() => useStoreGetter<AppState, 'count'>('count'), {
+      wrapper: makeWrapper(store)
+    });
 
     expect(store.pathListeners.direct.has('count')).toBe(false);
   });
@@ -387,7 +416,9 @@ describe('useStoreGetter — memory / cleanup (no subscriptions)', () => {
   it('store.listeners.length remains 0 after unmounting', () => {
     const store = makeStore() as StoreApiInternal<AppState>;
 
-    const { unmount } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
+    const { unmount } = renderHook(() => useStoreGetter<AppState>(), {
+      wrapper: makeWrapper(store)
+    });
 
     unmount();
 
@@ -398,7 +429,9 @@ describe('useStoreGetter — memory / cleanup (no subscriptions)', () => {
     const store = makeStore() as StoreApiInternal<AppState>;
 
     const hooks = Array.from({ length: 500 }, () =>
-      renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) })
+      renderHook(() => useStoreGetter<AppState>(), {
+        wrapper: makeWrapper(store)
+      })
     );
 
     expect(store.listeners.length).toBe(0);
@@ -411,7 +444,9 @@ describe('useStoreGetter — memory / cleanup (no subscriptions)', () => {
     const store = makeStore() as StoreApiInternal<AppState>;
 
     const hooks = Array.from({ length: 500 }, () =>
-      renderHook(() => useStoreGetter<AppState, 'schema.flat'>('schema.flat'), { wrapper: makeWrapper(store) })
+      renderHook(() => useStoreGetter<AppState, 'schema.flat'>('schema.flat'), {
+        wrapper: makeWrapper(store)
+      })
     );
 
     expect(store.pathListeners.size).toBe(0);
@@ -497,7 +532,9 @@ describe('useStoreGetter — edge cases', () => {
 
   it('getValue with no arg after full-state base returns entire state object', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStoreGetter<AppState>(), {
+      wrapper: makeWrapper(store)
+    });
 
     const value = result.current();
     expect(value).toBe(store.getState()); // same reference
@@ -528,7 +565,9 @@ describe('useStoreGetter — createStoreHook integration', () => {
     const store = makeStore();
     const { useStoreGetter: useBoundGetter } = createStoreHook<AppState>();
 
-    const { result } = renderHook(() => useBoundGetter(), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useBoundGetter(), {
+      wrapper: makeWrapper(store)
+    });
 
     expect(result.current('count')).toBe(0);
 
@@ -540,7 +579,9 @@ describe('useStoreGetter — createStoreHook integration', () => {
     const store = makeStore();
     const { useStoreGetter: useBoundGetter } = createStoreHook<AppState>();
 
-    const { result } = renderHook(() => useBoundGetter('schema.flat'), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useBoundGetter('schema.flat'), {
+      wrapper: makeWrapper(store)
+    });
 
     expect(result.current('btn1')).toEqual({ label: 'Button', type: 'button' });
   });
@@ -577,8 +618,12 @@ describe('useStoreGetter — createStoreHook integration', () => {
     }));
     const { useStoreGetter: useBoundGetter } = createStoreHook<AppState>();
 
-    const { result: resultA } = renderHook(() => useBoundGetter(), { wrapper: makeWrapper(storeA) });
-    const { result: resultB } = renderHook(() => useBoundGetter(), { wrapper: makeWrapper(storeB) });
+    const { result: resultA } = renderHook(() => useBoundGetter(), {
+      wrapper: makeWrapper(storeA)
+    });
+    const { result: resultB } = renderHook(() => useBoundGetter(), {
+      wrapper: makeWrapper(storeB)
+    });
 
     expect(resultA.current('count')).toBe(100);
     expect(resultB.current('count')).toBe(200);
@@ -600,7 +645,9 @@ describe('useStoreGetter — performance', () => {
 
   it('10 000 getValue() calls complete in < 50ms', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStoreGetter<AppState>(), {
+      wrapper: makeWrapper(store)
+    });
 
     const elapsed = measure('10 000 getValue() calls', () => {
       for (let i = 0; i < 10_000; i++) {
@@ -616,7 +663,9 @@ describe('useStoreGetter — performance', () => {
 
     const elapsed = measure('500 mount + unmount', () => {
       const hooks = Array.from({ length: 500 }, () =>
-        renderHook(() => useStoreGetter<AppState>(), { wrapper: makeWrapper(store) })
+        renderHook(() => useStoreGetter<AppState>(), {
+          wrapper: makeWrapper(store)
+        })
       );
       hooks.forEach(h => h.unmount());
     });
@@ -697,7 +746,9 @@ describe('useStoreGetter — array paths', () => {
 
     const fallback = { label: 'Default', type: 'button' };
     const getPaths = useStoreGetter as (paths: readonly string[]) => ((subPath?: string, def?: unknown) => unknown)[];
-    const { result } = renderHook(() => getPaths(['schema.flat', 'count']), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => getPaths(['schema.flat', 'count']), {
+      wrapper: makeWrapper(store)
+    });
 
     const [getFlat, getCount] = result.current;
     expect(getFlat('btn1', fallback)).toEqual(fallback); // undefined sub-path → fallback
@@ -745,12 +796,18 @@ describe('useStoreGetter — store option', () => {
     const contextStore = makeStore();
     const externalStore = createStore<AppState>(() => ({
       user: { name: 'External', age: 1 },
-      schema: { version: 1, flat: { ext1: { label: 'External', type: 'div' } } },
+      schema: {
+        version: 1,
+        flat: { ext1: { label: 'External', type: 'div' } }
+      },
       count: 0
     }));
 
     const { result } = renderHook(
-      () => useStoreGetter<AppState, 'schema.flat'>('schema.flat', { store: externalStore }),
+      () =>
+        useStoreGetter<AppState, 'schema.flat'>('schema.flat', {
+          store: externalStore
+        }),
       { wrapper: makeWrapper(contextStore) }
     );
 

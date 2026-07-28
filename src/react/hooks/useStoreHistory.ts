@@ -15,7 +15,12 @@ export type UseStoreHistoryReturn<TState> = HistorySnapshot<TState> & {
 
 // Stable empty view for a store with no history (no `historyMiddleware()` added). Lets the devtools History tab and
 // any consumer render gracefully ("No history yet") instead of crashing.
-const EMPTY_SNAPSHOT: HistorySnapshot<never> = { entries: [], index: -1, canUndo: false, canRedo: false };
+const EMPTY_SNAPSHOT: HistorySnapshot<never> = {
+  entries: [],
+  index: -1,
+  canUndo: false,
+  canRedo: false
+};
 const noop = () => {};
 const subscribeNone = () => noop;
 const getEmptySnapshot = () => EMPTY_SNAPSHOT;

@@ -1,5 +1,81 @@
-import { defineConfig } from 'vite';
+/// <reference types="vitest" />
 
-import ViteConfigBase from '../sdk-shared/vite.config';
+import fs from 'node:fs';
+import path from 'node:path';
 
-export default defineConfig(ViteConfigBase);
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vitest/config';
+
+function getEntries(root = path.resolve(__dirname, 'src')) {
+  const pattern = /index\.(ts|tsx|js|mjs)$/;
+  const entries: Record<string, string> = {};
+
+  function walk(dir: string) {
+    for (const file of fs.readdirSync(dir)) {
+      const fullPath = path.join(dir, file);
+      if (fs.statSync(fullPath).isDirectory()) {
+        walk(fullPath);
+      } else if (pattern.test(file)) {
+        const name = path.relative(root, fullPath).replace(pattern, '').replace(/\/$/, '') || 'index';
+        entries[name] = fullPath;
+      }
+    }
+  }
+
+  walk(root);
+  return entries;
+}
+
+export default defineConfig({
+  plugins: [
+    react(),
+    {
+      name: 'externalize-non-relative',
+      enforce: 'pre',
+      resolveId(source, importer) {
+        if (!importer || process.env.VITEST) return null;
+        if (!source.startsWith('.') && !path.isAbsolute(source)) {
+          return { id: source, external: true };
+        }
+        return null;
+      }
+    }
+  ],
+  build: {
+    lib: {
+      entry: getEntries()
+    },
+    rollupOptions: {
+      treeshake: false,
+      output: {
+        format: 'es',
+        exports: 'named',
+        preserveModules: true,
+        preserveModulesRoot: 'src',
+        entryFileNames: '[name].mjs',
+        chunkFileNames: '[name].mjs'
+      },
+      external: id => {
+        if (id.startsWith('node:')) return true;
+        if (id === 'react' || id === 'react-dom' || id.startsWith('react-dom/') || id.startsWith('react/')) return true;
+        if (!id.startsWith('.') && !id.startsWith('/')) return true;
+        return false;
+      }
+    },
+    sourcemap: false,
+    emptyOutDir: true
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./setupTests.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      reportsDirectory: 'tests',
+      include: ['src'],
+      exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx']
+    },
+    reporters: ['default']
+  }
+});

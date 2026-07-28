@@ -5,8 +5,16 @@ import { CANCEL } from '../types';
 
 import type { StoreChange, StoreMiddleware, WriteContext } from '../types';
 
-type AppState = { count: number; ui: { open: boolean; size: number }; tags: string[] };
-const initial = (): AppState => ({ count: 0, ui: { open: false, size: 10 }, tags: ['a'] });
+type AppState = {
+  count: number;
+  ui: { open: boolean; size: number };
+  tags: string[];
+};
+const initial = (): AppState => ({
+  count: 0,
+  ui: { open: false, size: 10 },
+  tags: ['a']
+});
 
 describe('beforeChange middleware — transforming writes', () => {
   it('transforms a single-segment write before it commits', () => {
@@ -49,8 +57,12 @@ describe('beforeChange middleware — transforming writes', () => {
   });
 
   it('lets the value through unchanged when the interceptor returns undefined', () => {
-    const passthrough: StoreMiddleware<AppState> = () => ({ beforeChange: () => undefined });
-    const store = createStore<AppState>(initial(), { middlewares: [passthrough] });
+    const passthrough: StoreMiddleware<AppState> = () => ({
+      beforeChange: () => undefined
+    });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [passthrough]
+    });
 
     store.setState('count', 7);
 
@@ -119,7 +131,9 @@ describe('beforeChange middleware — composition', () => {
     const store = createStore<AppState>(initial(), {
       middlewares: [
         () => ({ beforeChange: ({ value }) => (value as number) + 1 }),
-        () => ({ beforeChange: ({ value }) => ((value as number) > 3 ? CANCEL : value) })
+        () => ({
+          beforeChange: ({ value }) => ((value as number) > 3 ? CANCEL : value)
+        })
       ]
     });
 

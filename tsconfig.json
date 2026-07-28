@@ -1,6 +1,14 @@
 {
-  "extends": "../sdk-shared/tsconfig.json",
-  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
   "files": [],
+  "compilerOptions": {
+    "types": ["node", "vite/client"],
+    "composite": true,
+    "strict": true,
+    "outDir": "./dist"
+  },
   "exclude": ["dist", "node_modules", "**/dist"]
 }

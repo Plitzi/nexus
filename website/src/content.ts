@@ -1,12 +1,12 @@
-export const REPO_URL = 'https://github.com/Plitzi/plitzi-workspace/tree/main/packages/nexus';
-export const STORE_DIR_URL = 'https://github.com/Plitzi/plitzi-workspace/tree/main/packages/nexus';
-export const GITHUB_URL = 'https://github.com/Plitzi/plitzi-workspace';
+export const REPO_URL = 'https://github.com/Plitzi/nexus';
+export const STORE_DIR_URL = 'https://github.com/Plitzi/nexus';
+export const GITHUB_URL = 'https://github.com/Plitzi/nexus';
 export const NPM_URL = 'https://www.npmjs.com/package/@plitzi/nexus';
 export const INSTALL_COMMAND = 'npm install @plitzi/nexus';
 
 // Live social-proof endpoints. GitHub returns `stargazers_count` for the monorepo; npm returns last-month `downloads`
 // for the published package. Both are public, CORS-enabled GETs — see StatBadge for the cached fetch.
-export const GITHUB_REPO = 'Plitzi/plitzi-workspace';
+export const GITHUB_REPO = 'Plitzi/nexus';
 export const GITHUB_STARS_API = `https://api.github.com/repos/${GITHUB_REPO}`;
 export const NPM_DOWNLOADS_API = 'https://api.npmjs.org/downloads/point/last-month/@plitzi/nexus';
 

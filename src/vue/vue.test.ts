@@ -56,7 +56,10 @@ describe('@plitzi/nexus/vue', () => {
 
   it('useEntityOne / useEntityIds are reactive', () => {
     const store = createEntityStore<{ id: string; v: number }>([{ id: 'a', v: 1 }]);
-    const { result } = run(() => ({ one: useEntityOne(store, 'a'), ids: useEntityIds(store) }));
+    const { result } = run(() => ({
+      one: useEntityOne(store, 'a'),
+      ids: useEntityIds(store)
+    }));
 
     expect(result.one.value).toEqual({ id: 'a', v: 1 });
     expect(result.ids.value).toEqual(['a']);

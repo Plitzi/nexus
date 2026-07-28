@@ -66,16 +66,28 @@ describe('scoped store: live chain (createStore)', () => {
 
   it('deep-merges nested slices instead of shadowing the whole branch', () => {
     type N = { runtime?: { sources?: Record<string, unknown> } };
-    const parent = createStore<N>({ runtime: { sources: { variables: { a: 1 } } } });
+    const parent = createStore<N>({
+      runtime: { sources: { variables: { a: 1 } } }
+    });
     const child = createStore<N>({ runtime: { sources: { record: { b: 2 } } } }, { parent });
 
     // Child contributes `runtime.sources.record` without clobbering the parent's `runtime.sources.variables`.
-    expect(child.getState().runtime?.sources).toEqual({ variables: { a: 1 }, record: { b: 2 } });
+    expect(child.getState().runtime?.sources).toEqual({
+      variables: { a: 1 },
+      record: { b: 2 }
+    });
     expect(parent.getState().runtime?.sources).toEqual({ variables: { a: 1 } });
   });
 
   it('delegates a deeply-nested write to a root that never seeded the branch (no seeding)', () => {
-    type N = { runtime?: { sources?: { variables?: Record<string, unknown>; collection?: Record<string, unknown> } } };
+    type N = {
+      runtime?: {
+        sources?: {
+          variables?: Record<string, unknown>;
+          collection?: Record<string, unknown>;
+        };
+      };
+    };
     const root = createStore<N>({});
     const mid = createStore<N>({ runtime: { sources: { collection: { items: [] } } } }, { parent: root });
     const leaf = createStore<N>({}, { parent: mid });
@@ -85,7 +97,10 @@ describe('scoped store: live chain (createStore)', () => {
     // Nobody between leaf and root owns `runtime`, so the write delegates all the way to the root, and the
     // chain still deep-merges the mid scope's own `runtime.sources.collection` on read.
     expect(root.getState().runtime?.sources).toEqual({ variables: { a: 1 } });
-    expect(leaf.getState().runtime?.sources).toEqual({ collection: { items: [] }, variables: { a: 1 } });
+    expect(leaf.getState().runtime?.sources).toEqual({
+      collection: { items: [] },
+      variables: { a: 1 }
+    });
   });
 
   it('wakes child subscribers when the parent changes an inherited key', () => {
@@ -231,7 +246,10 @@ describe('scoped store — change forwarding', () => {
 describe('scoped store — lazy writer ownership regression', () => {
   type L = { big: Record<string, number>; other: { x: number } };
 
-  const seed = (): L => ({ big: { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7 }, other: { x: 0 } });
+  const seed = (): L => ({
+    big: { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7 },
+    other: { x: 0 }
+  });
 
   it('keeps writes to an owned subtree local after lazy writes to a different subtree', () => {
     const parent = createStore<L>({ ...seed(), other: { x: 100 } });
@@ -251,7 +269,10 @@ describe('scoped store — lazy writer ownership regression', () => {
 
   it('keeps single-segment writes to an owned key local after the root goes lazy', () => {
     type S2 = { big: Record<string, number>; flag: boolean };
-    const parent = createStore<S2>({ big: { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7 }, flag: false });
+    const parent = createStore<S2>({
+      big: { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7 },
+      flag: false
+    });
     const child = createStore<S2>({ big: { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7 }, flag: true }, { parent });
 
     child.setState('big.a', 11);

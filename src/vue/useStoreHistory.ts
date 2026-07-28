@@ -15,7 +15,12 @@ export type UseStoreHistoryReturn<TState> = HistorySnapshot<TState> & {
   clear: () => void;
 };
 
-const EMPTY_SNAPSHOT: HistorySnapshot<never> = { entries: [], index: -1, canUndo: false, canRedo: false };
+const EMPTY_SNAPSHOT: HistorySnapshot<never> = {
+  entries: [],
+  index: -1,
+  canUndo: false,
+  canRedo: false
+};
 const noop = () => {};
 
 const warned = new WeakSet<object>();

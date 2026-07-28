@@ -32,7 +32,9 @@ describe('persist middleware — edge cases', () => {
   it('drops a corrupt payload and keeps the initial state', () => {
     const { storage, data } = memoryStorage();
     data.set('app', '{ not valid json');
-    const store = createStore<State>(initial(), { middlewares: [persistMiddleware<State>({ key: 'app', storage })] });
+    const store = createStore<State>(initial(), {
+      middlewares: [persistMiddleware<State>({ key: 'app', storage })]
+    });
 
     expect(store.getState()).toEqual(initial());
     expect(data.has('app')).toBe(false);
@@ -48,7 +50,9 @@ describe('persist middleware — edge cases', () => {
           key: 'app',
           storage,
           version: 1,
-          migrate: persisted => ({ count: (persisted as { count: number }).count + 100 })
+          migrate: persisted => ({
+            count: (persisted as { count: number }).count + 100
+          })
         })
       ]
     });
@@ -70,12 +74,20 @@ describe('persist middleware — edge cases', () => {
   it('persists only the partialized slice', () => {
     const { storage, data } = memoryStorage();
     const store = createStore<State>(initial(), {
-      middlewares: [persistMiddleware<State>({ key: 'app', storage, partialize: state => ({ count: state.count }) })]
+      middlewares: [
+        persistMiddleware<State>({
+          key: 'app',
+          storage,
+          partialize: state => ({ count: state.count })
+        })
+      ]
     });
 
     store.setState('count', 3);
 
-    const saved = JSON.parse(data.get('app') ?? 'null') as { state: Partial<State> };
+    const saved = JSON.parse(data.get('app') ?? 'null') as {
+      state: Partial<State>;
+    };
     expect(saved.state).toEqual({ count: 3 });
   });
 
@@ -88,7 +100,9 @@ describe('persist middleware — edge cases', () => {
         persistMiddleware<State>({
           key: 'app',
           storage,
-          merge: (persisted, current) => ({ count: (persisted.count ?? 0) + current.count })
+          merge: (persisted, current) => ({
+            count: (persisted.count ?? 0) + current.count
+          })
         })
       ]
     });
@@ -100,7 +114,9 @@ describe('persist middleware — edge cases', () => {
 describe('logger middleware — edge cases', () => {
   it('logs to console.log by default', () => {
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const store = createStore<State>(initial(), { middlewares: [loggerMiddleware<State>()] });
+    const store = createStore<State>(initial(), {
+      middlewares: [loggerMiddleware<State>()]
+    });
 
     store.setState('count', 1);
 
@@ -111,7 +127,12 @@ describe('logger middleware — edge cases', () => {
   it('skips changes filtered out', () => {
     const sink = vi.fn();
     const store = createStore<State>(initial(), {
-      middlewares: [loggerMiddleware<State>({ filter: change => change.path !== 'count', sink })]
+      middlewares: [
+        loggerMiddleware<State>({
+          filter: change => change.path !== 'count',
+          sink
+        })
+      ]
     });
 
     store.setState('count', 1);

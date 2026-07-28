@@ -53,7 +53,10 @@ describe('path notification — ancestors', () => {
     const spy = vi.fn();
     store.subscribePath('items', spy);
 
-    store.setState('items', { coffee: { name: 'Coffee', qty: 9 }, bagel: { name: 'Bagel', qty: 0 } });
+    store.setState('items', {
+      coffee: { name: 'Coffee', qty: 9 },
+      bagel: { name: 'Bagel', qty: 0 }
+    });
 
     expect(spy).toHaveBeenCalledTimes(1);
   });
@@ -75,7 +78,10 @@ describe('path notification — descendants', () => {
     const spy = vi.fn();
     store.subscribePath('items.coffee.qty', spy);
 
-    store.setState('items', { coffee: { name: 'Coffee', qty: 3 }, bagel: { name: 'Bagel', qty: 0 } });
+    store.setState('items', {
+      coffee: { name: 'Coffee', qty: 3 },
+      bagel: { name: 'Bagel', qty: 0 }
+    });
 
     expect(spy).toHaveBeenCalledTimes(1);
   });
@@ -86,7 +92,10 @@ describe('path notification — descendants', () => {
     store.subscribePath('items.coffee.qty', spy);
 
     // Replace `items` but keep coffee.qty identical → coffee.qty did not change.
-    store.setState('items', { coffee: { name: 'Coffee ☕', qty: 1 }, bagel: { name: 'Bagel', qty: 0 } });
+    store.setState('items', {
+      coffee: { name: 'Coffee ☕', qty: 1 },
+      bagel: { name: 'Bagel', qty: 0 }
+    });
 
     expect(spy).not.toHaveBeenCalled();
   });
@@ -194,7 +203,9 @@ describe('path notification — array index paths', () => {
   type ListState = { rows: Array<{ value: number }> };
 
   it('wakes a listener watching the list when an element field is written', () => {
-    const store = createStore<ListState>({ rows: [{ value: 1 }, { value: 2 }] });
+    const store = createStore<ListState>({
+      rows: [{ value: 1 }, { value: 2 }]
+    });
     const spy = vi.fn();
     store.subscribePath('rows', spy);
 

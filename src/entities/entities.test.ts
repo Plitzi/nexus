@@ -5,7 +5,11 @@ import createStore from '../createStore/createStore';
 
 type Todo = { id: string; text: string; done: boolean };
 
-const todo = (id: string, text = id, done = false): Todo => ({ id, text, done });
+const todo = (id: string, text = id, done = false): Todo => ({
+  id,
+  text,
+  done
+});
 
 describe('createEntityAdapter — write operations', () => {
   const adapter = createEntityAdapter<Todo>();
@@ -42,10 +46,15 @@ describe('createEntityAdapter — write operations', () => {
   });
 
   it('setAll replaces the whole map; removeOne / removeMany / removeAll drop entries', () => {
-    const map = adapter.setAll([todo('1'), todo('2'), todo('3')])({ old: todo('old') });
+    const map = adapter.setAll([todo('1'), todo('2'), todo('3')])({
+      old: todo('old')
+    });
     expect(adapter.selectIds(map)).toEqual(['1', '2', '3']);
 
-    expect(adapter.removeOne('2')(map)).toEqual({ '1': todo('1'), '3': todo('3') });
+    expect(adapter.removeOne('2')(map)).toEqual({
+      '1': todo('1'),
+      '3': todo('3')
+    });
     expect(adapter.removeMany(['1', '3'])(map)).toEqual({ '2': todo('2') });
     expect(adapter.removeAll()(map)).toEqual({});
     expect(adapter.removeOne('404')(map)).toBe(map); // no change → same reference

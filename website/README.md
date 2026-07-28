@@ -1,13 +1,13 @@
 # @plitzi/nexus — website
 
-The marketing + docs landing page for [`@plitzi/nexus`](../../packages/nexus). A Vite + React + Tailwind app
-that **dogfoods the store straight from `../../packages/nexus/src`** — the live demos (path subscriptions, scoped
+The marketing + docs landing page for [`@plitzi/nexus`](..). A Vite + React + Tailwind app
+that **dogfoods the store straight from `../src`** — the live demos (path subscriptions, scoped
 stores, batch, time-travel, async, persist, entities, intercept, middleware) all run against the real source.
 
 ## Dev
 
 ```bash
-cd websites/nexus
+cd website
 npm install
 npm run dev
 ```
@@ -22,7 +22,7 @@ npm run build:published   # public demo build (against npm @plitzi/nexus)
 The `build:published` target sets `VITE_USE_PUBLISHED=true` so Vite resolves `@plitzi/nexus` from `node_modules`
 instead of the source alias — this is what the deploy CI does.
 
-The prod build also sets `VITE_BASE=/plitzi-workspace/nexus/` so GitHub Pages resolves scripts, styles and
+The prod build also sets `VITE_BASE=/nexus/` so GitHub Pages resolves scripts, styles and
 assets under the right sub-path.
 
 ## How it works
@@ -36,8 +36,8 @@ both peer-depend on react; without dedupe Vite would bundle two React instances 
 
 ## Dogfooding the store from source
 
-`vite.config.ts` aliases `@plitzi/nexus` and `@plitzi/nexus/history` to `../../packages/nexus/src`
-so the live demos run against the actual store source — every edit to `packages/nexus/src` is immediately
+`vite.config.ts` aliases `@plitzi/nexus` and `@plitzi/nexus/*` to `../src`
+so the live demos run against the actual store source — every edit to `src/` is immediately
 reflected in the dev server.
 
 The `tsconfig.json` has corresponding `paths` entries so TypeScript resolves the types from source too.

@@ -66,9 +66,13 @@ describe('writeByPath — codegen and recursive agree', () => {
   });
 
   it('agrees on non-identifier / special-character segments', () => {
-    expect(writeBoth({}, 'flat.weird key', 1)).toEqual({ flat: { 'weird key': 1 } });
+    expect(writeBoth({}, 'flat.weird key', 1)).toEqual({
+      flat: { 'weird key': 1 }
+    });
     expect(writeBoth({}, 'flat.a-b', 1)).toEqual({ flat: { 'a-b': 1 } });
-    expect(writeBoth({}, 'flat.a"]; evil(); //', 1)).toEqual({ flat: { 'a"]; evil(); //': 1 } });
+    expect(writeBoth({}, 'flat.a"]; evil(); //', 1)).toEqual({
+      flat: { 'a"]; evil(); //': 1 }
+    });
   });
 
   it('does not mutate the input on either backend', () => {
@@ -81,7 +85,9 @@ describe('writeByPath — codegen and recursive agree', () => {
 
 describe('writeByPath — array preservation', () => {
   it('keeps a top-level array an array on an indexed write', () => {
-    const result = writeBoth({ list: [10, 20, 30] }, 'list.1', 99) as { list: number[] };
+    const result = writeBoth({ list: [10, 20, 30] }, 'list.1', 99) as {
+      list: number[];
+    };
     expect(Array.isArray(result.list)).toBe(true);
     expect(result.list).toEqual([10, 99, 30]);
   });

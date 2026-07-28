@@ -26,7 +26,12 @@ const installExtension = () => {
 
   (window as unknown as { __REDUX_DEVTOOLS_EXTENSION__?: unknown }).__REDUX_DEVTOOLS_EXTENSION__ = { connect };
 
-  return { connect, init, send, dispatch: (message: Parameters<Listener>[0]) => listener?.(message) };
+  return {
+    connect,
+    init,
+    send,
+    dispatch: (message: Parameters<Listener>[0]) => listener?.(message)
+  };
 };
 
 afterEach(() => {
@@ -36,7 +41,9 @@ afterEach(() => {
 describe('reduxDevToolsMiddleware', () => {
   it('connects and sends the initial state', () => {
     const ext = installExtension();
-    createStore<AppState>(initial(), { middlewares: [reduxDevToolsMiddleware({ name: 'app' })] });
+    createStore<AppState>(initial(), {
+      middlewares: [reduxDevToolsMiddleware({ name: 'app' })]
+    });
 
     expect(ext.connect).toHaveBeenCalledWith({ name: 'app' });
     expect(ext.init).toHaveBeenCalledWith({ count: 0, ui: { open: false } });
@@ -44,7 +51,9 @@ describe('reduxDevToolsMiddleware', () => {
 
   it('sends each committed change as an action labelled by path, with the next state', () => {
     const ext = installExtension();
-    const store = createStore<AppState>(initial(), { middlewares: [reduxDevToolsMiddleware()] });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [reduxDevToolsMiddleware()]
+    });
 
     store.setState('count', 1);
     store.setState('ui.open', true);
@@ -55,7 +64,9 @@ describe('reduxDevToolsMiddleware', () => {
 
   it('labels a whole-state write SET_STATE by default', () => {
     const ext = installExtension();
-    const store = createStore<AppState>(initial(), { middlewares: [reduxDevToolsMiddleware()] });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [reduxDevToolsMiddleware()]
+    });
 
     store.setState(undefined, { count: 5, ui: { open: true } });
 
@@ -65,7 +76,11 @@ describe('reduxDevToolsMiddleware', () => {
   it('honours a custom action labeller', () => {
     const ext = installExtension();
     const store = createStore<AppState>(initial(), {
-      middlewares: [reduxDevToolsMiddleware<AppState>({ action: change => `set:${change.path ?? 'root'}` })]
+      middlewares: [
+        reduxDevToolsMiddleware<AppState>({
+          action: change => `set:${change.path ?? 'root'}`
+        })
+      ]
     });
 
     store.setState('count', 1);
@@ -75,7 +90,9 @@ describe('reduxDevToolsMiddleware', () => {
 
   it('applies a state the DevTools UI jumps to, without echoing it back', () => {
     const ext = installExtension();
-    const store = createStore<AppState>(initial(), { middlewares: [reduxDevToolsMiddleware()] });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [reduxDevToolsMiddleware()]
+    });
 
     ext.dispatch({
       type: 'DISPATCH',
@@ -89,7 +106,9 @@ describe('reduxDevToolsMiddleware', () => {
 
   it('ignores DISPATCH messages that carry no state', () => {
     const ext = installExtension();
-    const store = createStore<AppState>(initial(), { middlewares: [reduxDevToolsMiddleware()] });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [reduxDevToolsMiddleware()]
+    });
 
     ext.dispatch({ type: 'DISPATCH', payload: { type: 'PAUSE_RECORDING' } });
 
@@ -100,7 +119,9 @@ describe('reduxDevToolsMiddleware', () => {
     delete (window as unknown as { __REDUX_DEVTOOLS_EXTENSION__?: unknown }).__REDUX_DEVTOOLS_EXTENSION__;
 
     expect(() => {
-      const store = createStore<AppState>(initial(), { middlewares: [reduxDevToolsMiddleware()] });
+      const store = createStore<AppState>(initial(), {
+        middlewares: [reduxDevToolsMiddleware()]
+      });
       store.setState('count', 1);
     }).not.toThrow();
   });

@@ -28,7 +28,13 @@ describe('middleware error handling', () => {
   it('routes an onChange failure to the logger errorSink instead of throwing', () => {
     const failures: StoreError<AppState>[] = [];
     const store = createStore<AppState>(initial(), {
-      middlewares: [loggerMiddleware({ sink: () => {}, errorSink: f => failures.push(f) }), failing('onChange')]
+      middlewares: [
+        loggerMiddleware({
+          sink: () => {},
+          errorSink: f => failures.push(f)
+        }),
+        failing('onChange')
+      ]
     });
 
     expect(() => store.setState('count', 1)).not.toThrow();
@@ -43,7 +49,13 @@ describe('middleware error handling', () => {
   it('routes a beforeChange failure to the logger and fails the write closed', () => {
     const failures: StoreError<AppState>[] = [];
     const store = createStore<AppState>(initial(), {
-      middlewares: [loggerMiddleware({ sink: () => {}, errorSink: f => failures.push(f) }), failing('beforeChange')]
+      middlewares: [
+        loggerMiddleware({
+          sink: () => {},
+          errorSink: f => failures.push(f)
+        }),
+        failing('beforeChange')
+      ]
     });
 
     expect(() => store.setState('count', 1)).not.toThrow();
@@ -55,7 +67,9 @@ describe('middleware error handling', () => {
 
   it('does not let one failing onChange starve the other change observers', () => {
     const seen: number[] = [];
-    const observer: StoreMiddleware<AppState> = () => ({ onChange: c => seen.push(c.next.count) });
+    const observer: StoreMiddleware<AppState> = () => ({
+      onChange: c => seen.push(c.next.count)
+    });
     const store = createStore<AppState>(initial(), {
       middlewares: [loggerMiddleware({ sink: () => {}, errorSink: () => {} }), failing('onChange'), observer]
     });
@@ -81,7 +95,13 @@ describe('middleware error handling', () => {
       {},
       {
         parent,
-        middlewares: [loggerMiddleware({ sink: () => {}, errorSink: f => failures.push(f) }), failing('onChange')]
+        middlewares: [
+          loggerMiddleware({
+            sink: () => {},
+            errorSink: f => failures.push(f)
+          }),
+          failing('onChange')
+        ]
       }
     );
 

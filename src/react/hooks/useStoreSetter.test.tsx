@@ -21,7 +21,9 @@ const wrapper =
 describe('useStoreSetter', () => {
   it('returns a full setter that writes a path and accepts an updater', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreSetter<S>(), { wrapper: wrapper(store) });
+    const { result } = renderHook(() => useStoreSetter<S>(), {
+      wrapper: wrapper(store)
+    });
 
     act(() => result.current('count', 1));
     expect(store.getState().count).toBe(1);
@@ -32,15 +34,22 @@ describe('useStoreSetter', () => {
 
   it('replaces the whole state through the full setter', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreSetter<S>(), { wrapper: wrapper(store) });
+    const { result } = renderHook(() => useStoreSetter<S>(), {
+      wrapper: wrapper(store)
+    });
 
     act(() => result.current(undefined, { count: 5, user: { name: 'Grace', age: 85 } }));
-    expect(store.getState()).toEqual({ count: 5, user: { name: 'Grace', age: 85 } });
+    expect(store.getState()).toEqual({
+      count: 5,
+      user: { name: 'Grace', age: 85 }
+    });
   });
 
   it('scopes a base-path setter for sub-paths and the base itself', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStoreSetter<S, 'user'>('user'), { wrapper: wrapper(store) });
+    const { result } = renderHook(() => useStoreSetter<S, 'user'>('user'), {
+      wrapper: wrapper(store)
+    });
 
     act(() => result.current('name', 'Bob'));
     expect(store.getState().user.name).toBe('Bob');
@@ -51,7 +60,9 @@ describe('useStoreSetter', () => {
 
   it('keeps a stable setter reference across re-renders', () => {
     const store = makeStore();
-    const { result, rerender } = renderHook(() => useStoreSetter<S>(), { wrapper: wrapper(store) });
+    const { result, rerender } = renderHook(() => useStoreSetter<S>(), {
+      wrapper: wrapper(store)
+    });
     const first = result.current;
     rerender();
 

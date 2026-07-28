@@ -65,7 +65,13 @@ describe('historyMiddleware: action log', () => {
     type Noisy = { a: number; runtime: { x: number } };
     const store = createStore<Noisy>(
       { a: 0, runtime: { x: 0 } },
-      { middlewares: [historyMiddleware<Noisy>({ shouldRecord: path => !path?.startsWith('runtime.') })] }
+      {
+        middlewares: [
+          historyMiddleware<Noisy>({
+            shouldRecord: path => !path?.startsWith('runtime.')
+          })
+        ]
+      }
     );
     const history = enableHistory(store);
 

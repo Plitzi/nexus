@@ -70,7 +70,9 @@ describe('useAsyncValue', () => {
   it('suspends while pending and renders the value once resolved', async () => {
     const store = makeStore();
     const gate = deferred<number>();
-    const resource = createAsync(store, 'value', () => gate.promise, { immediate: [] });
+    const resource = createAsync(store, 'value', () => gate.promise, {
+      immediate: []
+    });
 
     render(
       createElement(
@@ -88,7 +90,9 @@ describe('useAsyncValue', () => {
   it('throws to the nearest error boundary on failure', async () => {
     const store = makeStore();
     const gate = deferred<number>();
-    const resource = createAsync(store, 'value', () => gate.promise, { immediate: [] });
+    const resource = createAsync(store, 'value', () => gate.promise, {
+      immediate: []
+    });
 
     // React logs caught boundary errors to console.error; the failure here is expected, so keep it out of the output.
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});

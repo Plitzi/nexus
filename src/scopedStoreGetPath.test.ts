@@ -37,10 +37,15 @@ describe('scoped store: getPath resolves a single path through the chain', () =>
 
   it('deep-merges when both the scope and the chain contribute an object at the path', () => {
     type N = { runtime: { sources: Record<string, unknown> } };
-    const parent = createStore<N>({ runtime: { sources: { variables: { a: 1 } } } });
+    const parent = createStore<N>({
+      runtime: { sources: { variables: { a: 1 } } }
+    });
     const child = createStore<N>({ runtime: { sources: { record: { b: 2 } } } }, { parent });
 
-    expect(child.getPath('runtime.sources')).toEqual({ variables: { a: 1 }, record: { b: 2 } });
+    expect(child.getPath('runtime.sources')).toEqual({
+      variables: { a: 1 },
+      record: { b: 2 }
+    });
   });
 
   it('resolves through multiple chain levels', () => {
@@ -278,7 +283,9 @@ describe('scoped store: referential stability when detached', () => {
 
   describe('getPath must return the same reference on consecutive calls even when detached', () => {
     it('returns the same object reference on every getPath call when detached (both-objects-merge branch)', () => {
-      const parent = createStore<NestedState>({ runtime: { sources: { variables: { a: 1 } } } });
+      const parent = createStore<NestedState>({
+        runtime: { sources: { variables: { a: 1 } } }
+      });
       const child = createStore<NestedState>({ runtime: { sources: { record: { b: 2 } } } }, { parent });
 
       expect((child as StoreApiInternal<NestedState>).listeners.length).toBe(0);
@@ -292,7 +299,9 @@ describe('scoped store: referential stability when detached', () => {
     });
 
     it('returns the same object reference on every getState call when detached', () => {
-      const parent = createStore<NestedState>({ runtime: { sources: { variables: { a: 1 } } } });
+      const parent = createStore<NestedState>({
+        runtime: { sources: { variables: { a: 1 } } }
+      });
       const child = createStore<NestedState>({ runtime: { sources: { record: { b: 2 } } } }, { parent });
 
       expect((child as StoreApiInternal<NestedState>).listeners.length).toBe(0);
@@ -306,7 +315,9 @@ describe('scoped store: referential stability when detached', () => {
     });
 
     it('returns the same reference on consecutive calls when attached (cache works)', () => {
-      const parent = createStore<NestedState>({ runtime: { sources: { variables: { a: 1 } } } });
+      const parent = createStore<NestedState>({
+        runtime: { sources: { variables: { a: 1 } } }
+      });
       const child = createStore<NestedState>({ runtime: { sources: { record: { b: 2 } } } }, { parent });
 
       const unsubscribe = child.subscribe(vi.fn());
@@ -322,7 +333,9 @@ describe('scoped store: referential stability when detached', () => {
     });
 
     it('invalidates cached reads after a parent write while detached', () => {
-      const parent = createStore<NestedState>({ runtime: { sources: { variables: { a: 1 } } } });
+      const parent = createStore<NestedState>({
+        runtime: { sources: { variables: { a: 1 } } }
+      });
       const child = createStore<NestedState>({ runtime: { sources: { record: { b: 2 } } } }, { parent });
 
       const before = child.getPath('runtime.sources');
@@ -357,7 +370,10 @@ describe('scoped store: referential stability when detached', () => {
           { value: { runtime: { sources: { parentSource: { x: 1 } } } } },
           createElement(
             StoreProvider<S>,
-            { inherit: 'live', value: { runtime: { sources: { childSource: { y: 2 } } } } },
+            {
+              inherit: 'live',
+              value: { runtime: { sources: { childSource: { y: 2 } } } }
+            },
             children
           )
         );

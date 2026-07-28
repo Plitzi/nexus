@@ -120,7 +120,14 @@ const StoreProvider = <TState extends object = any>({
   // Register this store under `id` in the parallel registry, regardless of `inherit`, so a descendant can reach it
   // by id even past a disconnected provider. A linked-list node (no Map copy) keeps each provider O(1).
   const registry = useMemo<StoreRegistry | undefined>(
-    () => (id ? { id, store: storeRef.current as StoreApi<TState>, parent: parentRegistry } : parentRegistry),
+    () =>
+      id
+        ? {
+            id,
+            store: storeRef.current as StoreApi<TState>,
+            parent: parentRegistry
+          }
+        : parentRegistry,
     [id, parentRegistry]
   );
 

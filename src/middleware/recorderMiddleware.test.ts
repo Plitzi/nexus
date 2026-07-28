@@ -9,13 +9,20 @@ const initial = (): AppState => ({ count: 0, ui: { open: false } });
 describe('createRecorder', () => {
   it('records each committed write with path and before/after value', () => {
     const recorder = createRecorder<AppState>();
-    const store = createStore<AppState>(initial(), { middlewares: [recorder.middleware] });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [recorder.middleware]
+    });
 
     store.setState('count', 1);
     store.setState('ui.open', true);
 
     expect(
-      recorder.getEntries().map(e => ({ seq: e.seq, path: e.path, prev: e.prevValue, next: e.nextValue }))
+      recorder.getEntries().map(e => ({
+        seq: e.seq,
+        path: e.path,
+        prev: e.prevValue,
+        next: e.nextValue
+      }))
     ).toEqual([
       { seq: 1, path: 'count', prev: 0, next: 1 },
       { seq: 2, path: 'ui.open', prev: false, next: true }
@@ -24,7 +31,9 @@ describe('createRecorder', () => {
 
   it('returns only entries after a given seq', () => {
     const recorder = createRecorder<AppState>();
-    const store = createStore<AppState>(initial(), { middlewares: [recorder.middleware] });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [recorder.middleware]
+    });
 
     store.setState('count', 1);
     const mark = recorder.lastSeq();
@@ -36,7 +45,9 @@ describe('createRecorder', () => {
 
   it('caps the buffer at `max`, dropping oldest first', () => {
     const recorder = createRecorder<AppState>({ max: 2 });
-    const store = createStore<AppState>(initial(), { middlewares: [recorder.middleware] });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [recorder.middleware]
+    });
 
     store.setState('count', 1);
     store.setState('count', 2);
@@ -48,7 +59,9 @@ describe('createRecorder', () => {
 
   it('notifies subscribers on record and clear, and getEntries is a stable reference between records', () => {
     const recorder = createRecorder<AppState>();
-    const store = createStore<AppState>(initial(), { middlewares: [recorder.middleware] });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [recorder.middleware]
+    });
     const listener = vi.fn();
     recorder.subscribe(listener);
 
@@ -63,10 +76,15 @@ describe('createRecorder', () => {
 
   it('records full-state writes with an undefined path', () => {
     const recorder = createRecorder<AppState>();
-    const store = createStore<AppState>(initial(), { middlewares: [recorder.middleware] });
+    const store = createStore<AppState>(initial(), {
+      middlewares: [recorder.middleware]
+    });
 
     store.setState(undefined, { count: 9, ui: { open: true } });
 
-    expect(recorder.getEntries()[0]).toMatchObject({ path: undefined, nextValue: { count: 9, ui: { open: true } } });
+    expect(recorder.getEntries()[0]).toMatchObject({
+      path: undefined,
+      nextValue: { count: 9, ui: { open: true } }
+    });
   });
 });

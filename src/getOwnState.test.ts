@@ -22,7 +22,9 @@ describe('getOwnState', () => {
 
   it('is reference-stable between calls with no change', () => {
     type State = { a: number; own: number };
-    const child = createStore<State>(() => ({ own: 5 }), { parent: createStore<State>(() => ({ a: 1 })) });
+    const child = createStore<State>(() => ({ own: 5 }), {
+      parent: createStore<State>(() => ({ a: 1 }))
+    });
 
     expect(child.getOwnState()).toBe(child.getOwnState());
   });

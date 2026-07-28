@@ -1,9 +1,12 @@
 {
-  "extends": "../sdk-shared/tsconfig.node.json",
-  "references": [{ "path": "../sdk-shared" }],
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "rootDir": "./",
-    "outDir": "./dist"
+    "composite": true,
+    "emitDeclarationOnly": true,
+    "strictNullChecks": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node", "vite/client"]
   },
-  "include": ["src", "vite.config.ts", "setupTests.ts"]
+  "include": ["vite.config.ts"]
 }

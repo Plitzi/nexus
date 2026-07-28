@@ -35,7 +35,9 @@ describe('useStoreSync: mount behavior', () => {
   it('writes the initial value to the store on mount', () => {
     const store = makeStore();
 
-    renderHook(() => useStoreSync('count', 42), { wrapper: makeWrapper(store) });
+    renderHook(() => useStoreSync('count', 42), {
+      wrapper: makeWrapper(store)
+    });
 
     expect(store.getState().count).toBe(42);
   });
@@ -43,7 +45,9 @@ describe('useStoreSync: mount behavior', () => {
   it('writes a nested path value on mount', () => {
     const store = makeStore();
 
-    renderHook(() => useStoreSync('schema.title', 'my-schema'), { wrapper: makeWrapper(store) });
+    renderHook(() => useStoreSync('schema.title', 'my-schema'), {
+      wrapper: makeWrapper(store)
+    });
 
     expect(store.getState().schema.title).toBe('my-schema');
   });
@@ -60,9 +64,15 @@ describe('useStoreSync: sync mode', () => {
     const store = makeStore();
     let externalValue = 'Alice';
 
-    const { rerender } = renderHook(() => useStoreSync('user.name', externalValue, { syncStrategy: 'afterRender' }), {
-      wrapper: makeWrapper(store)
-    });
+    const { rerender } = renderHook(
+      () =>
+        useStoreSync('user.name', externalValue, {
+          syncStrategy: 'afterRender'
+        }),
+      {
+        wrapper: makeWrapper(store)
+      }
+    );
 
     expect(store.getState().user.name).toBe('Alice');
 
@@ -77,7 +87,9 @@ describe('useStoreSync: sync mode', () => {
     const listener = vi.fn();
     store.subscribePath('count', listener);
 
-    const { rerender } = renderHook(() => useStoreSync('count', 5), { wrapper: makeWrapper(store) });
+    const { rerender } = renderHook(() => useStoreSync('count', 5), {
+      wrapper: makeWrapper(store)
+    });
 
     rerender();
     rerender();
@@ -221,7 +233,9 @@ describe('useStoreSync: interaction with other subscribers', () => {
     const { rerender } = renderHook(
       () => {
         useStoreSync('count', externalCount, { syncStrategy: 'afterRender' });
-        useStoreSync('user.name', externalName, { syncStrategy: 'afterRender' });
+        useStoreSync('user.name', externalName, {
+          syncStrategy: 'afterRender'
+        });
       },
       { wrapper: makeWrapper(store) }
     );

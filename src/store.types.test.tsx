@@ -83,7 +83,9 @@ describe('useStore types — string path', () => {
   // [1] no options
   it('[1] no options → PathValue, no | undefined for required paths', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStore('count'), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStore('count'), {
+      wrapper: makeWrapper(store)
+    });
     const [value, setter] = result.current;
 
     expectTypeOf(value).toEqualTypeOf<number>();
@@ -94,7 +96,9 @@ describe('useStore types — string path', () => {
   // [3] optional path, no options
   it('[3] optional path, no options → already T | undefined', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStore('tag'), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStore('tag'), {
+      wrapper: makeWrapper(store)
+    });
     const [value, setter] = result.current;
 
     expectTypeOf(value).toEqualTypeOf<string | undefined>();
@@ -106,7 +110,9 @@ describe('useStore types — string path', () => {
   // [3b] destructuring default widens a required path to | undefined (replaces the old defaultValue overload)
   it('[3b] destructuring default → PathValue | undefined', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStore('count'), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStore('count'), {
+      wrapper: makeWrapper(store)
+    });
     const [value = undefined] = result.current;
 
     expectTypeOf(value).toEqualTypeOf<number | undefined>();
@@ -146,7 +152,9 @@ describe('useStore types — function path', () => {
   // [6] no options
   it('[6] no options → PathValue, no | undefined for required paths', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStore(() => 'count' as const), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStore(() => 'count' as const), {
+      wrapper: makeWrapper(store)
+    });
     const [value, setter] = result.current;
 
     expectTypeOf(value).toEqualTypeOf<number>();
@@ -157,7 +165,9 @@ describe('useStore types — function path', () => {
   // [8] optional path fn, no options
   it('[8] optional path fn, no options → already T | undefined', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStore(() => 'tag' as const), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStore(() => 'tag' as const), {
+      wrapper: makeWrapper(store)
+    });
     const [value] = result.current;
 
     expectTypeOf(value).toEqualTypeOf<string | undefined>();
@@ -179,12 +189,19 @@ describe('useStore types — function path', () => {
   it('[10b] { transformer: T → object } → object type', () => {
     const store = makeStore();
     const { result } = renderHook(
-      () => useStore(() => 'user' as const, { transformer: u => ({ ...u, display: u.name.toUpperCase() }) }),
+      () =>
+        useStore(() => 'user' as const, {
+          transformer: u => ({ ...u, display: u.name.toUpperCase() })
+        }),
       { wrapper: makeWrapper(store) }
     );
     const [value] = result.current;
 
-    expectTypeOf(value).toEqualTypeOf<{ name: string; nickname?: string; display: string }>();
+    expectTypeOf(value).toEqualTypeOf<{
+      name: string;
+      nickname?: string;
+      display: string;
+    }>();
   });
 });
 
@@ -196,7 +213,9 @@ describe('useStore types — no path (full state)', () => {
   // [11]
   it('[11] no options → [TState, setState]', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStore(), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStore(), {
+      wrapper: makeWrapper(store)
+    });
     const [value] = result.current;
 
     expectTypeOf(value).toEqualTypeOf<AppState>();
@@ -223,7 +242,9 @@ describe('useStore types — multi string path', () => {
   // [12b] positional destructuring defaults widen per-position (replaces the old array defaultValue overload)
   it('[12b] positional destructuring defaults → per-position widening', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStore(['tag', 'count'] as const), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStore(['tag', 'count'] as const), {
+      wrapper: makeWrapper(store)
+    });
     const [[tag = 'fallback', count = undefined]] = result.current;
 
     expectTypeOf(tag).toEqualTypeOf<string>();
@@ -234,7 +255,10 @@ describe('useStore types — multi string path', () => {
   it('[16] { transformer } → TResult, setters still PathValue setters', () => {
     const store = makeStore();
     const { result } = renderHook(
-      () => useStore(['count', 'user.name'] as const, { transformer: ([n, s]) => `${s}:${n}` }),
+      () =>
+        useStore(['count', 'user.name'] as const, {
+          transformer: ([n, s]) => `${s}:${n}`
+        }),
       { wrapper: makeWrapper(store) }
     );
     const [value, setCount, setName] = result.current;
@@ -317,7 +341,9 @@ describe('createStoreHook bound useStore — key overloads match base', () => {
   // string path
   it('[23a] string path, no options → PathValue', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStore('count'), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStore('count'), {
+      wrapper: makeWrapper(store)
+    });
     const [value] = result.current;
 
     expectTypeOf(value).toEqualTypeOf<number>();
@@ -337,7 +363,9 @@ describe('createStoreHook bound useStore — key overloads match base', () => {
   // function path
   it('[23e] function path, no options → PathValue', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStore(() => 'count' as const), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStore(() => 'count' as const), {
+      wrapper: makeWrapper(store)
+    });
     const [value] = result.current;
 
     expectTypeOf(value).toEqualTypeOf<number>();
@@ -346,9 +374,15 @@ describe('createStoreHook bound useStore — key overloads match base', () => {
 
   it('[23h] function path, { transformer } → TResult', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStore(() => 'count' as const, { transformer: n => ({ value: n }) }), {
-      wrapper: makeWrapper(store)
-    });
+    const { result } = renderHook(
+      () =>
+        useStore(() => 'count' as const, {
+          transformer: n => ({ value: n })
+        }),
+      {
+        wrapper: makeWrapper(store)
+      }
+    );
     const [value] = result.current;
 
     expectTypeOf(value).toEqualTypeOf<{ value: number }>();
@@ -357,7 +391,9 @@ describe('createStoreHook bound useStore — key overloads match base', () => {
   // multi-path spot checks
   it('[23i] multi-path, no options → PathValues', () => {
     const store = makeStore();
-    const { result } = renderHook(() => useStore(['count', 'tag'] as const), { wrapper: makeWrapper(store) });
+    const { result } = renderHook(() => useStore(['count', 'tag'] as const), {
+      wrapper: makeWrapper(store)
+    });
     const [values] = result.current;
 
     expectTypeOf(values[0]).toEqualTypeOf<number>();
@@ -367,7 +403,10 @@ describe('createStoreHook bound useStore — key overloads match base', () => {
   it('[23j] multi-path, { transformer } → TResult', () => {
     const store = makeStore();
     const { result } = renderHook(
-      () => useStore(['count', 'tag'] as const, { transformer: ([n, t]) => `${t ?? ''}:${n}` }),
+      () =>
+        useStore(['count', 'tag'] as const, {
+          transformer: ([n, t]) => `${t ?? ''}:${n}`
+        }),
       { wrapper: makeWrapper(store) }
     );
     const [value] = result.current;

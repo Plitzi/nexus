@@ -68,7 +68,10 @@ describe('persistMiddleware SSR guard', () => {
 
   it('hydrates from storage when data exists', () => {
     const { storage, data } = createInMemoryStorage();
-    data['hydrate-test'] = JSON.stringify({ version: 0, state: { count: 99, user: 'hydrated' } });
+    data['hydrate-test'] = JSON.stringify({
+      version: 0,
+      state: { count: 99, user: 'hydrated' }
+    });
 
     const store = createStore<S>(
       { count: 0, user: 'ssr' },
@@ -92,7 +95,10 @@ describe('persistMiddleware SSR guard', () => {
 
     store.setState('count', 7);
 
-    const saved = JSON.parse(data['write-test']) as { version: number; state: Record<string, unknown> };
+    const saved = JSON.parse(data['write-test']) as {
+      version: number;
+      state: Record<string, unknown>;
+    };
     expect(saved.state.count).toBe(7);
   });
 
@@ -130,14 +136,20 @@ describe('persistMiddleware SSR guard', () => {
 
     store.setState('count', 99);
 
-    const saved = JSON.parse(data['partial']) as { version: number; state: Record<string, unknown> };
+    const saved = JSON.parse(data['partial']) as {
+      version: number;
+      state: Record<string, unknown>;
+    };
     expect(saved.state).toEqual({ count: 99 });
     expect(saved.state.user).toBeUndefined();
   });
 
   it('respects version + migrate', () => {
     const { storage, data } = createInMemoryStorage();
-    data['migrate-test'] = JSON.stringify({ version: 0, state: { name: 'old-schema' } });
+    data['migrate-test'] = JSON.stringify({
+      version: 0,
+      state: { name: 'old-schema' }
+    });
 
     const store = createStore<S>(
       { count: 0, user: '' },

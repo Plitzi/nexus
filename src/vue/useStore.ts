@@ -5,7 +5,9 @@ import { injectStore } from './injection';
 import type { PathOf, PathValue, StoreApi } from '../types';
 import type { Ref, WritableComputedRef } from 'vue';
 
-export type UseStoreOptions<TState extends object> = { store?: StoreApi<TState> };
+export type UseStoreOptions<TState extends object> = {
+  store?: StoreApi<TState>;
+};
 
 // Internal: a `shallowRef` kept in sync with a store path (or the whole state when `path` is `undefined`). Cleans up
 // its subscription when the owning effect scope is disposed (component unmount).

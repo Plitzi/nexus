@@ -6,7 +6,7 @@ export type PageMeta = {
   image?: string;
 };
 
-const SITE = 'https://plitzi.github.io/plitzi-workspace';
+const SITE = 'https://plitzi.github.io/nexus';
 const DEFAULT_IMAGE = `${SITE}/og.svg`;
 
 const setMeta = (name: string, content: string) => {

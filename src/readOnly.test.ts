@@ -68,7 +68,9 @@ describe('read-only paths (dev behavior)', () => {
   });
 
   it('does not restrict anything when readOnly is omitted', () => {
-    const store = createStore<{ config: { theme: string } }>(() => ({ config: { theme: 'light' } }));
+    const store = createStore<{ config: { theme: string } }>(() => ({
+      config: { theme: 'light' }
+    }));
 
     store.setState('config.theme', 'dark');
 
@@ -78,7 +80,10 @@ describe('read-only paths (dev behavior)', () => {
   it('rejects a read-only write before it can delegate to a parent', () => {
     type State = { locked: number };
     const parent = createStore<State>(() => ({ locked: 1 }));
-    const child = createStore<State>(() => ({}), { parent, readOnly: ['locked'] });
+    const child = createStore<State>(() => ({}), {
+      parent,
+      readOnly: ['locked']
+    });
 
     expect(() => child.setState('locked', 2)).toThrow(/read-only path "locked"/);
     expect(parent.getState().locked).toBe(1);
@@ -86,7 +91,9 @@ describe('read-only paths (dev behavior)', () => {
 
   describe('modifying the read-only path itself', () => {
     it('throws on the updater form and never runs the updater', () => {
-      const store = createStore<{ locked: number }>(() => ({ locked: 1 }), { readOnly: ['locked'] });
+      const store = createStore<{ locked: number }>(() => ({ locked: 1 }), {
+        readOnly: ['locked']
+      });
       const updater = vi.fn((v: number) => v + 1);
 
       expect(() => store.setState('locked', updater)).toThrow(/read-only path "locked"/);
@@ -102,7 +109,9 @@ describe('read-only paths (dev behavior)', () => {
     });
 
     it('throws when writing the exact same value (no early bail before the guard)', () => {
-      const store = createStore<{ locked: number }>(() => ({ locked: 1 }), { readOnly: ['locked'] });
+      const store = createStore<{ locked: number }>(() => ({ locked: 1 }), {
+        readOnly: ['locked']
+      });
 
       expect(() => store.setState('locked', 1)).toThrow(/read-only path "locked"/);
     });
@@ -111,7 +120,9 @@ describe('read-only paths (dev behavior)', () => {
   describe('modifying an ancestor (parent) of a read-only path', () => {
     it('throws when writing a single-segment parent of a nested read-only path', () => {
       type State = { config: { theme: string } };
-      const store = createStore<State>(() => ({ config: { theme: 'light' } }), { readOnly: ['config.theme'] });
+      const store = createStore<State>(() => ({ config: { theme: 'light' } }), {
+        readOnly: ['config.theme']
+      });
 
       expect(() => store.setState('config', { theme: 'dark' })).toThrow(/read-only path "config"/);
       expect(store.getState().config.theme).toBe('light');
@@ -119,7 +130,9 @@ describe('read-only paths (dev behavior)', () => {
 
     it('throws when unmounting a parent that holds the read-only subtree', () => {
       type State = { a?: { b?: number } };
-      const store = createStore<State>(() => ({ a: { b: 1 } }), { readOnly: ['a.b'] });
+      const store = createStore<State>(() => ({ a: { b: 1 } }), {
+        readOnly: ['a.b']
+      });
 
       expect(() => store.setState('a', undefined, { unmount: true })).toThrow(/read-only path "a"/);
       expect(store.getState().a).toEqual({ b: 1 });
@@ -127,7 +140,9 @@ describe('read-only paths (dev behavior)', () => {
 
     it('throws for a grandparent write two levels above the read-only leaf', () => {
       type State = { a: { b: { c: number } } };
-      const store = createStore<State>(() => ({ a: { b: { c: 1 } } }), { readOnly: ['a.b.c'] });
+      const store = createStore<State>(() => ({ a: { b: { c: 1 } } }), {
+        readOnly: ['a.b.c']
+      });
 
       expect(() => store.setState('a', { b: { c: 2 } })).toThrow(/read-only path "a"/);
     });
@@ -145,7 +160,9 @@ describe('read-only paths (dev behavior)', () => {
 
     it('throws when unmounting a descendant of a read-only path', () => {
       type State = { config: { theme?: string } };
-      const store = createStore<State>(() => ({ config: { theme: 'light' } }), { readOnly: ['config'] });
+      const store = createStore<State>(() => ({ config: { theme: 'light' } }), {
+        readOnly: ['config']
+      });
 
       expect(() => store.setState('config.theme', undefined, { unmount: true })).toThrow(
         /read-only path "config.theme"/
@@ -178,7 +195,9 @@ describe('read-only paths (dev behavior)', () => {
 
     it('does not treat a.bc as a descendant of read-only a.b', () => {
       type State = { a: { b: number; bc: number } };
-      const store = createStore<State>(() => ({ a: { b: 1, bc: 2 } }), { readOnly: ['a.b'] });
+      const store = createStore<State>(() => ({ a: { b: 1, bc: 2 } }), {
+        readOnly: ['a.b']
+      });
 
       store.setState('a.bc', 9);
 
@@ -197,7 +216,9 @@ describe('read-only paths (dev behavior)', () => {
 
     it('enforces every path when several are read-only', () => {
       type State = { a: number; b: { c: number }; d: number };
-      const store = createStore<State>(() => ({ a: 1, b: { c: 2 }, d: 3 }), { readOnly: ['a', 'b.c'] });
+      const store = createStore<State>(() => ({ a: 1, b: { c: 2 }, d: 3 }), {
+        readOnly: ['a', 'b.c']
+      });
 
       expect(() => store.setState('a', 9)).toThrow(/read-only path "a"/);
       expect(() => store.setState('b.c', 9)).toThrow(/read-only path "b.c"/);
@@ -209,7 +230,9 @@ describe('read-only paths (dev behavior)', () => {
   describe('edge cases: whole-state replaces use reference semantics', () => {
     it('blocks a replace that rebuilds an equal-but-new read-only object', () => {
       type State = { a: number; locked: { v: number } };
-      const store = createStore<State>(() => ({ a: 1, locked: { v: 42 } }), { readOnly: ['locked'] });
+      const store = createStore<State>(() => ({ a: 1, locked: { v: 42 } }), {
+        readOnly: ['locked']
+      });
 
       // Same value, new reference at `locked` — rejected, matching the store's reference-based change detection.
       expect(() => store.setState(undefined, { a: 2, locked: { v: 42 } })).toThrow(/read-only path "locked"/);
@@ -217,7 +240,9 @@ describe('read-only paths (dev behavior)', () => {
 
     it('blocks a whole-state replace via the updater form when it touches a read-only path', () => {
       type State = { a: number; locked: number };
-      const store = createStore<State>(() => ({ a: 1, locked: 42 }), { readOnly: ['locked'] });
+      const store = createStore<State>(() => ({ a: 1, locked: 42 }), {
+        readOnly: ['locked']
+      });
 
       expect(() => store.setState(undefined, prev => ({ ...prev, locked: 99 }))).toThrow(/read-only path "locked"/);
       expect(store.getState().locked).toBe(42);
@@ -227,7 +252,9 @@ describe('read-only paths (dev behavior)', () => {
   describe('scope chain', () => {
     it('rejects a delegated child write via the readOnly on the parent', () => {
       type State = { locked: number };
-      const parent = createStore<State>(() => ({ locked: 1 }), { readOnly: ['locked'] });
+      const parent = createStore<State>(() => ({ locked: 1 }), {
+        readOnly: ['locked']
+      });
       const child = createStore<State>(() => ({}), { parent });
 
       expect(() => child.setState('locked', 2)).toThrow(/read-only path "locked"/);
@@ -236,7 +263,9 @@ describe('read-only paths (dev behavior)', () => {
 
     it('does not apply a parent readOnly to a key the child owns locally', () => {
       type State = { value: number };
-      const parent = createStore<State>(() => ({ value: 1 }), { readOnly: ['value'] });
+      const parent = createStore<State>(() => ({ value: 1 }), {
+        readOnly: ['value']
+      });
       const child = createStore<State>(() => ({ value: 10 }), { parent });
 
       // The child structurally owns `value`, so its write stays local and the parent's readOnly never sees it.

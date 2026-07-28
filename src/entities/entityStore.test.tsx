@@ -184,14 +184,18 @@ describe('createEntityStore — snapshot stability', () => {
   });
 
   it('applies sortComparer to getAll', () => {
-    const store = createEntityStore<Item>(seed(), { sortComparer: (a, b) => b.value - a.value });
+    const store = createEntityStore<Item>(seed(), {
+      sortComparer: (a, b) => b.value - a.value
+    });
 
     expect(store.getAll().map(item => item.id)).toEqual(['c', 'b', 'a']);
   });
 
   it('supports a custom selectId', () => {
     type Row = { key: number; name: string };
-    const store = createEntityStore<Row>([{ key: 7, name: 'seven' }], { selectId: row => row.key });
+    const store = createEntityStore<Row>([{ key: 7, name: 'seven' }], {
+      selectId: row => row.key
+    });
 
     expect(store.getOne(7)).toEqual({ key: 7, name: 'seven' });
   });
@@ -249,7 +253,10 @@ describe('createEntityStore — React hooks', () => {
     const { result } = renderHook(() => useEntityAll(store));
 
     act(() => store.updateOne('a', { value: 100 }));
-    expect(result.current.find(item => item.id === 'a')).toEqual({ id: 'a', value: 100 });
+    expect(result.current.find(item => item.id === 'a')).toEqual({
+      id: 'a',
+      value: 100
+    });
   });
 });
 

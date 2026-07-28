@@ -38,7 +38,11 @@ describe('StoreProvider — middleware inheritance', () => {
     const wrapper = ({ children }: { children: ReactNode }) =>
       createElement(
         StoreProvider<S>,
-        { value: { n: 0 }, autoSync: false, middlewares: [loggerMiddleware<S>(change => paths.push(change.path))] },
+        {
+          value: { n: 0 },
+          autoSync: false,
+          middlewares: [loggerMiddleware<S>(change => paths.push(change.path))]
+        },
         createElement(StoreProvider<S>, { value: { n: 0 }, autoSync: false }, children)
       );
 
