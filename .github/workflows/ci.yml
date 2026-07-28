@@ -208,14 +208,7 @@ jobs:
           yarn config set 'npmRegistryServer' "${{ matrix.registry.url }}"
           yarn config set 'npmAuthToken' "${{ secrets[matrix.registry.token] }}"
 
-      - name: Publish packages
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          createGithubReleases: false
-          publish: yarn ci:publish
+      - name: Publish package
+        run: npm publish --access public
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets[matrix.registry.token] }}
           NODE_AUTH_TOKEN: ${{ secrets[matrix.registry.token] }}
-          HOME: ${{ github.workspace }}
