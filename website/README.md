@@ -15,12 +15,10 @@ npm run dev
 ## Build
 
 ```bash
-npm run build          # dev build (against source)
-npm run build:published   # public demo build (against npm @plitzi/nexus)
+npm run build   # tsc + vite against source alias
 ```
 
-The `build:published` target sets `VITE_USE_PUBLISHED=true` so Vite resolves `@plitzi/nexus` from `node_modules`
-instead of the source alias — this is what the deploy CI does.
+The deploy CI also runs `npm run build` after installing root deps so tsc can follow the source alias to `../src`.
 
 The prod build also sets `VITE_BASE=/nexus/` so GitHub Pages resolves scripts, styles and
 assets under the right sub-path.
