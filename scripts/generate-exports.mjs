@@ -93,7 +93,13 @@ function generateExports(dir, prefix = '.') {
           exportEntry[type] = makeExportPath(filePath);
         }
       }
-
+      // Fallback: dts may be in a subdirectory with index.d.ts (e.g. react.mjs -> react/index.d.ts)
+      if (!exportEntry.types) {
+        const dirTypes = path.join(entryPath.replace(/\.mjs$/, ''), 'index.d.ts');
+        if (fs.existsSync(dirTypes) && hasMeaningfulExports(dirTypes)) {
+          exportEntry.types = makeExportPath(dirTypes);
+        }
+      }
       if (Object.keys(exportEntry).length) {
         exportsObj[key] = exportEntry;
       }

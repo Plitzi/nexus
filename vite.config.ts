@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import react from '@vitejs/plugin-react';
+import dts from 'vite-plugin-dts';
 import { defineConfig } from 'vitest/config';
 
 function getEntries(root = path.resolve(__dirname, 'src')) {
@@ -29,6 +30,11 @@ function getEntries(root = path.resolve(__dirname, 'src')) {
 export default defineConfig({
   plugins: [
     react(),
+    dts({
+      entryRoot: 'src',
+      exclude: ['**/*.test.(ts|tsx)', '**/*.stories.(ts|tsx)', 'vite.config.ts', 'setupTests.ts'],
+      tsconfigPath: './tsconfig.app.json'
+    }),
     {
       name: 'externalize-non-relative',
       enforce: 'pre',
@@ -53,7 +59,7 @@ export default defineConfig({
         preserveModules: true,
         preserveModulesRoot: 'src',
         entryFileNames: '[name].mjs',
-        chunkFileNames: '[name].mjs'
+        chunkFileNames: 'chunks/[name]-[hash].mjs'
       },
       external: id => {
         if (id.startsWith('node:')) return true;

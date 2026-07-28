@@ -43,6 +43,7 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.65.0",
     "vite": "^8.1.5",
+    "vite-plugin-dts": "^5.0.3",
     "vitest": "^4.1.10",
     "vitest-fetch-mock": "^0.4.5",
     "vue": "^3.5.40"
@@ -65,208 +66,262 @@
   },
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
-    "./advanced/index": {
-      "import": "./dist/advanced/index.mjs"
+    "./advanced": {
+      "import": "./dist/advanced.mjs",
+      "types": "./dist/advanced/index.d.ts"
     },
     "./async/createAsync": {
+      "types": "./dist/async/createAsync.d.ts",
       "import": "./dist/async/createAsync.mjs"
     },
-    "./async/index": {
-      "import": "./dist/async/index.mjs"
+    "./async": {
+      "import": "./dist/async.mjs",
+      "types": "./dist/async/index.d.ts"
     },
     "./createStore/createStore": {
+      "types": "./dist/createStore/createStore.d.ts",
       "import": "./dist/createStore/createStore.mjs"
     },
-    "./createStore/index": {
-      "import": "./dist/createStore/index.mjs"
+    "./createStore/helpers/PathTrie": {
+      "types": "./dist/createStore/helpers/PathTrie.d.ts",
+      "import": "./dist/createStore/helpers/PathTrie.mjs"
+    },
+    "./createStore/helpers/Subscribers": {
+      "types": "./dist/createStore/helpers/Subscribers.d.ts",
+      "import": "./dist/createStore/helpers/Subscribers.mjs"
+    },
+    "./createStore/helpers/createChainReads": {
+      "types": "./dist/createStore/helpers/createChainReads.d.ts",
+      "import": "./dist/createStore/helpers/createChainReads.mjs"
+    },
+    "./createStore/helpers/createSetState": {
+      "types": "./dist/createStore/helpers/createSetState.d.ts",
+      "import": "./dist/createStore/helpers/createSetState.mjs"
+    },
+    "./createStore/helpers/deepMerge": {
+      "types": "./dist/createStore/helpers/deepMerge.d.ts",
+      "import": "./dist/createStore/helpers/deepMerge.mjs"
+    },
+    "./createStore/helpers/forwardParentChanges": {
+      "types": "./dist/createStore/helpers/forwardParentChanges.d.ts",
+      "import": "./dist/createStore/helpers/forwardParentChanges.mjs"
+    },
+    "./createStore/helpers/scopeCollisions": {
+      "types": "./dist/createStore/helpers/scopeCollisions.d.ts",
+      "import": "./dist/createStore/helpers/scopeCollisions.mjs"
+    },
+    "./createStore/helpers/writeByPath": {
+      "types": "./dist/createStore/helpers/writeByPath.d.ts",
+      "import": "./dist/createStore/helpers/writeByPath.mjs"
+    },
+    "./createStore": {
+      "import": "./dist/createStore.mjs",
+      "types": "./dist/createStore/index.d.ts"
     },
     "./derived/createDerived": {
+      "types": "./dist/derived/createDerived.d.ts",
       "import": "./dist/derived/createDerived.mjs"
     },
-    "./derived/index": {
-      "import": "./dist/derived/index.mjs"
+    "./derived": {
+      "import": "./dist/derived.mjs",
+      "types": "./dist/derived/index.d.ts"
     },
     "./devStoreRegistry": {
+      "types": "./dist/devStoreRegistry.d.ts",
       "import": "./dist/devStoreRegistry.mjs"
     },
     "./entities/createEntityAdapter": {
+      "types": "./dist/entities/createEntityAdapter.d.ts",
       "import": "./dist/entities/createEntityAdapter.mjs"
     },
     "./entities/createEntityStore": {
+      "types": "./dist/entities/createEntityStore.d.ts",
       "import": "./dist/entities/createEntityStore.mjs"
     },
-    "./entities/index": {
-      "import": "./dist/entities/index.mjs"
+    "./entities": {
+      "import": "./dist/entities.mjs",
+      "types": "./dist/entities/index.d.ts"
     },
     "./env": {
+      "types": "./dist/env.d.ts",
       "import": "./dist/env.mjs"
     },
     "./helpers/createObservable": {
+      "types": "./dist/helpers/createObservable.d.ts",
       "import": "./dist/helpers/createObservable.mjs"
     },
     "./helpers/getByPath": {
+      "types": "./dist/helpers/getByPath.d.ts",
       "import": "./dist/helpers/getByPath.mjs"
     },
     "./helpers/isPathAffected": {
+      "types": "./dist/helpers/isPathAffected.d.ts",
       "import": "./dist/helpers/isPathAffected.mjs"
     },
     "./helpers/parsePath": {
+      "types": "./dist/helpers/parsePath.d.ts",
       "import": "./dist/helpers/parsePath.mjs"
     },
     "./helpers/setByPath": {
+      "types": "./dist/helpers/setByPath.d.ts",
       "import": "./dist/helpers/setByPath.mjs"
     },
     "./helpers/shallowEqual": {
+      "types": "./dist/helpers/shallowEqual.d.ts",
       "import": "./dist/helpers/shallowEqual.mjs"
     },
-    "./history/index": {
-      "import": "./dist/history/index.mjs"
+    "./history": {
+      "import": "./dist/history.mjs",
+      "types": "./dist/history/index.d.ts"
     },
     "./index": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
     "./middleware/cascade": {
+      "types": "./dist/middleware/cascade.d.ts",
       "import": "./dist/middleware/cascade.mjs"
     },
     "./middleware/historyMiddleware": {
+      "types": "./dist/middleware/historyMiddleware.d.ts",
       "import": "./dist/middleware/historyMiddleware.mjs"
     },
-    "./middleware/index": {
-      "import": "./dist/middleware/index.mjs"
-    },
     "./middleware/isDisabled": {
+      "types": "./dist/middleware/isDisabled.d.ts",
       "import": "./dist/middleware/isDisabled.mjs"
     },
     "./middleware/loggerMiddleware": {
+      "types": "./dist/middleware/loggerMiddleware.d.ts",
       "import": "./dist/middleware/loggerMiddleware.mjs"
     },
     "./middleware/persistMiddleware": {
+      "types": "./dist/middleware/persistMiddleware.d.ts",
       "import": "./dist/middleware/persistMiddleware.mjs"
     },
     "./middleware/recorderMiddleware": {
+      "types": "./dist/middleware/recorderMiddleware.d.ts",
       "import": "./dist/middleware/recorderMiddleware.mjs"
     },
     "./middleware/reduxDevToolsMiddleware": {
+      "types": "./dist/middleware/reduxDevToolsMiddleware.d.ts",
       "import": "./dist/middleware/reduxDevToolsMiddleware.mjs"
     },
-    "./next/index": {
-      "import": "./dist/next/index.mjs"
+    "./middleware": {
+      "import": "./dist/middleware.mjs",
+      "types": "./dist/middleware/index.d.ts"
     },
-    "./node_modules/react/cjs/react-jsx-runtime.development": {
-      "import": "./dist/node_modules/react/cjs/react-jsx-runtime.development.mjs"
-    },
-    "./node_modules/react/cjs/react-jsx-runtime.production": {
-      "import": "./dist/node_modules/react/cjs/react-jsx-runtime.production.mjs"
-    },
-    "./node_modules/react/jsx-runtime": {
-      "import": "./dist/node_modules/react/jsx-runtime.mjs"
+    "./next": {
+      "import": "./dist/next.mjs",
+      "types": "./dist/next/index.d.ts"
     },
     "./react/DevStoreScopeContext": {
+      "types": "./dist/react/DevStoreScopeContext.d.ts",
       "import": "./dist/react/DevStoreScopeContext.mjs"
     },
     "./react/StoreContext": {
+      "types": "./dist/react/StoreContext.d.ts",
       "import": "./dist/react/StoreContext.mjs"
     },
     "./react/StoreProvider": {
+      "types": "./dist/react/StoreProvider.d.ts",
       "import": "./dist/react/StoreProvider.mjs"
     },
     "./react/createStoreHook": {
+      "types": "./dist/react/createStoreHook.d.ts",
       "import": "./dist/react/createStoreHook.mjs"
     },
     "./react/hooks/shared": {
+      "types": "./dist/react/hooks/shared.d.ts",
       "import": "./dist/react/hooks/shared.mjs"
     },
     "./react/hooks/useAsync": {
+      "types": "./dist/react/hooks/useAsync.d.ts",
       "import": "./dist/react/hooks/useAsync.mjs"
     },
     "./react/hooks/useAsyncValue": {
+      "types": "./dist/react/hooks/useAsyncValue.d.ts",
       "import": "./dist/react/hooks/useAsyncValue.mjs"
     },
     "./react/hooks/useDerived": {
+      "types": "./dist/react/hooks/useDerived.d.ts",
       "import": "./dist/react/hooks/useDerived.mjs"
     },
     "./react/hooks/useEntity": {
+      "types": "./dist/react/hooks/useEntity.d.ts",
       "import": "./dist/react/hooks/useEntity.mjs"
     },
     "./react/hooks/useStore": {
+      "types": "./dist/react/hooks/useStore.d.ts",
       "import": "./dist/react/hooks/useStore.mjs"
     },
     "./react/hooks/useStoreById": {
+      "types": "./dist/react/hooks/useStoreById.d.ts",
       "import": "./dist/react/hooks/useStoreById.mjs"
     },
     "./react/hooks/useStoreGetter": {
+      "types": "./dist/react/hooks/useStoreGetter.d.ts",
       "import": "./dist/react/hooks/useStoreGetter.mjs"
     },
     "./react/hooks/useStoreHistory": {
+      "types": "./dist/react/hooks/useStoreHistory.d.ts",
       "import": "./dist/react/hooks/useStoreHistory.mjs"
     },
     "./react/hooks/useStoreSetter": {
+      "types": "./dist/react/hooks/useStoreSetter.d.ts",
       "import": "./dist/react/hooks/useStoreSetter.mjs"
     },
     "./react/hooks/useStoreSync": {
+      "types": "./dist/react/hooks/useStoreSync.d.ts",
       "import": "./dist/react/hooks/useStoreSync.mjs"
     },
-    "./react/index": {
-      "import": "./dist/react/index.mjs"
-    },
     "./react/useIsomorphicLayoutEffect": {
+      "types": "./dist/react/useIsomorphicLayoutEffect.d.ts",
       "import": "./dist/react/useIsomorphicLayoutEffect.mjs"
     },
-    "./rsc/index": {
-      "import": "./dist/rsc/index.mjs"
+    "./react": {
+      "import": "./dist/react.mjs",
+      "types": "./dist/react/index.d.ts"
     },
-    "./src/createStore/helpers/PathTrie": {
-      "import": "./dist/src/createStore/helpers/PathTrie.mjs"
-    },
-    "./src/createStore/helpers/Subscribers": {
-      "import": "./dist/src/createStore/helpers/Subscribers.mjs"
-    },
-    "./src/createStore/helpers/createChainReads": {
-      "import": "./dist/src/createStore/helpers/createChainReads.mjs"
-    },
-    "./src/createStore/helpers/createSetState": {
-      "import": "./dist/src/createStore/helpers/createSetState.mjs"
-    },
-    "./src/createStore/helpers/deepMerge": {
-      "import": "./dist/src/createStore/helpers/deepMerge.mjs"
-    },
-    "./src/createStore/helpers/forwardParentChanges": {
-      "import": "./dist/src/createStore/helpers/forwardParentChanges.mjs"
-    },
-    "./src/createStore/helpers/scopeCollisions": {
-      "import": "./dist/src/createStore/helpers/scopeCollisions.mjs"
-    },
-    "./src/createStore/helpers/writeByPath": {
-      "import": "./dist/src/createStore/helpers/writeByPath.mjs"
+    "./rsc": {
+      "import": "./dist/rsc.mjs"
     },
     "./types/StoreTypes": {
       "import": "./dist/types/StoreTypes.mjs"
     },
-    "./types/index": {
-      "import": "./dist/types/index.mjs"
-    },
-    "./vue/index": {
-      "import": "./dist/vue/index.mjs"
+    "./types": {
+      "import": "./dist/types.mjs",
+      "types": "./dist/types/index.d.ts"
     },
     "./vue/injection": {
+      "types": "./dist/vue/injection.d.ts",
       "import": "./dist/vue/injection.mjs"
     },
     "./vue/useAsync": {
+      "types": "./dist/vue/useAsync.d.ts",
       "import": "./dist/vue/useAsync.mjs"
     },
     "./vue/useDerived": {
+      "types": "./dist/vue/useDerived.d.ts",
       "import": "./dist/vue/useDerived.mjs"
     },
     "./vue/useEntity": {
+      "types": "./dist/vue/useEntity.d.ts",
       "import": "./dist/vue/useEntity.mjs"
     },
     "./vue/useStore": {
+      "types": "./dist/vue/useStore.d.ts",
       "import": "./dist/vue/useStore.mjs"
     },
     "./vue/useStoreHistory": {
+      "types": "./dist/vue/useStoreHistory.d.ts",
       "import": "./dist/vue/useStoreHistory.mjs"
+    },
+    "./vue": {
+      "import": "./dist/vue.mjs",
+      "types": "./dist/vue/index.d.ts"
     }
   }
 }
