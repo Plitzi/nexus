@@ -5,9 +5,16 @@ const TTL = 60 * 60 * 1000;
 type Cached = {
   value: number;
   at: number;
+  url: string;
+  version: string;
 };
 
-const readCache = (key: string): number | null => {
+// localStorage is scoped to the ORIGIN, not the path, so every site ever served from this GitHub Pages domain shares
+// these keys. When the store moved out of the monorepo, the badge kept serving the old repository's star count under
+// an unchanged key. So the entry carries its own identity: a release bump invalidates every cached stat, and a
+// changed endpoint invalidates that one even without a release. Entries written before these fields existed have
+// neither, so they read as a miss and are refetched.
+const readCache = (key: string, url: string): number | null => {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) {
@@ -15,7 +22,7 @@ const readCache = (key: string): number | null => {
     }
 
     const parsed = JSON.parse(raw) as Cached;
-    if (Date.now() - parsed.at > TTL) {
+    if (parsed.version !== __NEXUS_VERSION__ || parsed.url !== url || Date.now() - parsed.at > TTL) {
       return null;
     }
 
@@ -25,9 +32,10 @@ const readCache = (key: string): number | null => {
   }
 };
 
-const writeCache = (key: string, value: number) => {
+const writeCache = (key: string, url: string, value: number) => {
   try {
-    localStorage.setItem(key, JSON.stringify({ value, at: Date.now() } satisfies Cached));
+    const entry: Cached = { value, at: Date.now(), url, version: __NEXUS_VERSION__ };
+    localStorage.setItem(key, JSON.stringify(entry));
   } catch {
     // Ignore quota / privacy-mode failures — the badge just refetches next visit.
   }
@@ -37,7 +45,7 @@ const writeCache = (key: string, value: number) => {
 // hammer the API (GitHub's unauthenticated limit is 60 req/h). `extract` pulls the number out of the parsed payload;
 // returning null on any failure lets the badge render a graceful fallback instead of a broken count.
 const useLiveStat = (cacheKey: string, url: string, extract: (data: unknown) => number | undefined) => {
-  const [value, setValue] = useState<number | null>(() => readCache(cacheKey));
+  const [value, setValue] = useState<number | null>(() => readCache(cacheKey, url));
 
   useEffect(() => {
     if (value !== null) {
@@ -51,7 +59,7 @@ const useLiveStat = (cacheKey: string, url: string, extract: (data: unknown) => 
         const next = extract(data);
         if (active && typeof next === 'number') {
           setValue(next);
-          writeCache(cacheKey, next);
+          writeCache(cacheKey, url, next);
         }
       })
       .catch(() => {

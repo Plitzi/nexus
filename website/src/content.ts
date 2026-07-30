@@ -4,7 +4,7 @@ export const GITHUB_URL = 'https://github.com/Plitzi/nexus';
 export const NPM_URL = 'https://www.npmjs.com/package/@plitzi/nexus';
 export const INSTALL_COMMAND = 'npm install @plitzi/nexus';
 
-// Live social-proof endpoints. GitHub returns `stargazers_count` for the monorepo; npm returns last-month `downloads`
+// Live social-proof endpoints. GitHub returns `stargazers_count` for this repository; npm returns last-month `downloads`
 // for the published package. Both are public, CORS-enabled GETs — see StatBadge for the cached fetch.
 export const GITHUB_REPO = 'Plitzi/nexus';
 export const GITHUB_STARS_API = `https://api.github.com/repos/${GITHUB_REPO}`;

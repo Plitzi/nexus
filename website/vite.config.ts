@@ -1,8 +1,13 @@
+import { createRequire } from 'node:module';
 import { fileURLToPath, URL } from 'node:url';
 
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+
+// The released version of the store this build documents. Baked in so client code can key caches on it and drop
+// anything carried over from a previous release.
+const { version } = createRequire(import.meta.url)('../package.json') as { version: string };
 
 // GitHub Pages serves from https://<org>.github.io/<repo>/, so assets need that sub-path as base.
 // In dev or with a custom domain, VITE_BASE should be '/'.
@@ -14,6 +19,9 @@ const storeSrc = fileURLToPath(new URL('../src', import.meta.url));
 
 export default defineConfig({
   base,
+  define: {
+    __NEXUS_VERSION__: JSON.stringify(version)
+  },
   resolve: {
     // nexus source lives in the project root (../src), so without deduping it would import a different copy of React
     // while react-dom uses this app's copy — two React instances, null hooks. Force a single copy.
