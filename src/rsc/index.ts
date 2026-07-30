@@ -12,7 +12,7 @@ type WithSsrFlag<T> = T & { readonly [SSR_FLAG]: true };
  *
  * ```tsx
  * import { createServerSnapshot } from '@plitzi/nexus/rsc';
- * import { StoreProvider } from '@plitzi/nexus';
+ * import { StoreProvider } from '@plitzi/nexus/react';
  *
  * export default async function Page() {
  *   const data = await fetch('https://api.example.com/user');

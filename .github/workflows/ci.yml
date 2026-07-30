@@ -82,6 +82,12 @@ jobs:
       - name: Yarn Build
         run: yarn build:prod
 
+      # `build:prod` regenerates the `exports` map from dist, but the publish job checks out the repo fresh and only
+      # restores dist — so it publishes the COMMITTED manifest. A stale one ships a package whose exports do not
+      # match its dist (a new subpath would silently be unreachable).
+      - name: Verify committed exports match the build
+        run: git diff --exit-code -- package.json
+
   lint:
     needs: build-packages
     runs-on: ubuntu-latest
@@ -125,36 +131,36 @@ jobs:
       - name: Yarn Typecheck
         run: yarn typecheck
 
-  # tests:
-  #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
-  #   needs: lint
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
+  tests:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-  # - name: Enable Corepack
-  # run: corepack enable
+      - name: Enable Corepack
+        run: corepack enable
 
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 24
-  #         registry-url: https://npm.pkg.github.com/plitzi
-  # cache: 'yarn'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://npm.pkg.github.com
+          scope: '@plitzi'
+          cache: 'yarn'
 
-  #     - name: Restore Cache
-  #       uses: actions/cache@v4
-  #       env:
-  #         cache-name: cache-node-modules
-  #       with:
-  #         path: '**/node_modules'
-  #         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
+      - name: Restore Cache node_modules
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
 
-  #     - name: Yarn Tests
-  #       run: yarn test:ci
+      - name: Yarn Tests
+        run: yarn test
 
   publish:
     if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
-    needs: lint
+    needs: tests
     runs-on: ubuntu-latest
     strategy:
       matrix:

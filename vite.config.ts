@@ -49,7 +49,10 @@ export default defineConfig(({ mode, command }) => ({
   ],
   build: {
     lib: {
-      entry: getEntries()
+      entry: getEntries(),
+      // Without this Vite also runs a `cjs` pass, and both passes write `[name].mjs` — the CJS output
+      // silently overwrites the ESM one, leaving `require()` calls inside .mjs files.
+      formats: ['es']
     },
     rollupOptions: {
       treeshake: false,

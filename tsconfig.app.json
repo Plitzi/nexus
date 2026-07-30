@@ -22,7 +22,10 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "rootDir": "./",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    // `composite` defaults this next to outDir, which puts 100+ kB of incremental build metadata inside the
+    // published `dist`. Keep it out of the package.
+    "tsBuildInfoFile": "./node_modules/.cache/tsconfig.app.tsbuildinfo"
   },
   "include": ["src", "package.json", "vite.config.ts"],
   "exclude": ["dist", "node_modules", "**/dist"]

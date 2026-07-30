@@ -12,21 +12,43 @@ const makeExportPath = (file) =>
 // Ignore configured folders (e.g. bundler virtual folders like _virtual created by Vite/Rolldown)
 const IGNORED_DIRS = ['_virtual'];
 
+// The package is ESM-only, so there is no `.cjs` to hand to the `require` condition. Without a trailing `default`
+// the subpath resolves to nothing outside the `import` condition and Node answers ERR_PACKAGE_PATH_NOT_EXPORTED —
+// even on versions that can require() ESM. Pointing `default` at the ESM entry lets require(esm) and any tool with
+// an unusual condition set resolve it. Must stay LAST: conditions are matched in declaration order.
+// Conditions are matched in declaration order, so `types` must lead (TypeScript takes the first condition it
+// understands) and `default` must trail (it matches everything).
+const CONDITION_ORDER = ['types', 'import', 'require'];
+
+const withDefault = (exportEntry) => {
+  const ordered = {};
+  for (const condition of CONDITION_ORDER) {
+    if (exportEntry[condition]) {
+      ordered[condition] = exportEntry[condition];
+    }
+  }
+
+  if (exportEntry.import) {
+    ordered.default = exportEntry.import;
+  }
+
+  return ordered;
+};
+
 function hasMeaningfulExports(filePath) {
   const content = fs.readFileSync(filePath, 'utf-8');
 
-  // remove comments
+  // remove comments, then drop the bare `export {}` TypeScript appends to mark a file as a module — it says
+  // nothing about whether the file exports anything, and treating it as a disqualifier used to strip the `types`
+  // condition off every declaration file that ended with one.
   const cleaned = content
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/\/\/.*$/gm, '')
+    .replace(/export\s*\{\s*\}\s*;?/g, '')
     .trim();
 
   // should contain something exportable
-  return (
-    cleaned.includes('export') &&
-    cleaned.length > 0 &&
-    !/export\s*\{\s*\}/.test(cleaned) // export vacío
-  );
+  return cleaned.includes('export');
 }
 
 /**
@@ -75,7 +97,7 @@ function generateExports(dir, prefix = '.') {
         (exportEntry.import || exportEntry.require) &&
         exportEntry.types
       ) {
-        exportsObj[key] = exportEntry;
+        exportsObj[key] = withDefault(exportEntry);
       }
 
       // Recursively scan subfolders
@@ -101,7 +123,7 @@ function generateExports(dir, prefix = '.') {
         }
       }
       if (Object.keys(exportEntry).length) {
-        exportsObj[key] = exportEntry;
+        exportsObj[key] = withDefault(exportEntry);
       }
     }
   }
@@ -120,6 +142,9 @@ for (const [type, file] of Object.entries(mainIndex)) {
   if (fs.existsSync(file)) {
     mainExports['.'] = { ...mainExports['.'], [type]: makeExportPath(file) };
   }
+}
+if (mainExports['.']) {
+  mainExports['.'] = withDefault(mainExports['.']);
 }
 
 // Read current package.json

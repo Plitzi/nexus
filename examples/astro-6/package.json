@@ -7,7 +7,7 @@
     "build": "astro build"
   },
   "dependencies": {
-    "@plitzi/nexus": "^0.32.15",
+    "@plitzi/nexus": "^1.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

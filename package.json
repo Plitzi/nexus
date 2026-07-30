@@ -1,13 +1,14 @@
 {
   "name": "@plitzi/nexus",
-  "version": "0.32.16",
+  "version": "1.0.0",
   "license": "Apache-2.0",
   "files": [
     "dist",
-    "logo.svg"
+    "logo.svg",
+    "CHANGELOG.md"
   ],
-  "main": "dist/index.js",
-  "module": "dist/index.js",
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "scripts": {
     "lint": "eslint ./src",
@@ -67,261 +68,328 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
     },
     "./advanced": {
+      "types": "./dist/advanced/index.d.ts",
       "import": "./dist/advanced.mjs",
-      "types": "./dist/advanced/index.d.ts"
+      "default": "./dist/advanced.mjs"
     },
     "./async/createAsync": {
       "types": "./dist/async/createAsync.d.ts",
-      "import": "./dist/async/createAsync.mjs"
+      "import": "./dist/async/createAsync.mjs",
+      "default": "./dist/async/createAsync.mjs"
     },
     "./async": {
+      "types": "./dist/async/index.d.ts",
       "import": "./dist/async.mjs",
-      "types": "./dist/async/index.d.ts"
+      "default": "./dist/async.mjs"
     },
     "./createStore/createStore": {
       "types": "./dist/createStore/createStore.d.ts",
-      "import": "./dist/createStore/createStore.mjs"
+      "import": "./dist/createStore/createStore.mjs",
+      "default": "./dist/createStore/createStore.mjs"
     },
     "./createStore/helpers/PathTrie": {
       "types": "./dist/createStore/helpers/PathTrie.d.ts",
-      "import": "./dist/createStore/helpers/PathTrie.mjs"
+      "import": "./dist/createStore/helpers/PathTrie.mjs",
+      "default": "./dist/createStore/helpers/PathTrie.mjs"
     },
     "./createStore/helpers/Subscribers": {
       "types": "./dist/createStore/helpers/Subscribers.d.ts",
-      "import": "./dist/createStore/helpers/Subscribers.mjs"
+      "import": "./dist/createStore/helpers/Subscribers.mjs",
+      "default": "./dist/createStore/helpers/Subscribers.mjs"
     },
     "./createStore/helpers/createChainReads": {
       "types": "./dist/createStore/helpers/createChainReads.d.ts",
-      "import": "./dist/createStore/helpers/createChainReads.mjs"
+      "import": "./dist/createStore/helpers/createChainReads.mjs",
+      "default": "./dist/createStore/helpers/createChainReads.mjs"
     },
     "./createStore/helpers/createSetState": {
       "types": "./dist/createStore/helpers/createSetState.d.ts",
-      "import": "./dist/createStore/helpers/createSetState.mjs"
+      "import": "./dist/createStore/helpers/createSetState.mjs",
+      "default": "./dist/createStore/helpers/createSetState.mjs"
     },
     "./createStore/helpers/deepMerge": {
       "types": "./dist/createStore/helpers/deepMerge.d.ts",
-      "import": "./dist/createStore/helpers/deepMerge.mjs"
+      "import": "./dist/createStore/helpers/deepMerge.mjs",
+      "default": "./dist/createStore/helpers/deepMerge.mjs"
     },
     "./createStore/helpers/forwardParentChanges": {
       "types": "./dist/createStore/helpers/forwardParentChanges.d.ts",
-      "import": "./dist/createStore/helpers/forwardParentChanges.mjs"
+      "import": "./dist/createStore/helpers/forwardParentChanges.mjs",
+      "default": "./dist/createStore/helpers/forwardParentChanges.mjs"
     },
     "./createStore/helpers/scopeCollisions": {
       "types": "./dist/createStore/helpers/scopeCollisions.d.ts",
-      "import": "./dist/createStore/helpers/scopeCollisions.mjs"
+      "import": "./dist/createStore/helpers/scopeCollisions.mjs",
+      "default": "./dist/createStore/helpers/scopeCollisions.mjs"
     },
     "./createStore/helpers/writeByPath": {
       "types": "./dist/createStore/helpers/writeByPath.d.ts",
-      "import": "./dist/createStore/helpers/writeByPath.mjs"
+      "import": "./dist/createStore/helpers/writeByPath.mjs",
+      "default": "./dist/createStore/helpers/writeByPath.mjs"
     },
     "./createStore": {
+      "types": "./dist/createStore/index.d.ts",
       "import": "./dist/createStore.mjs",
-      "types": "./dist/createStore/index.d.ts"
+      "default": "./dist/createStore.mjs"
     },
     "./derived/createDerived": {
       "types": "./dist/derived/createDerived.d.ts",
-      "import": "./dist/derived/createDerived.mjs"
+      "import": "./dist/derived/createDerived.mjs",
+      "default": "./dist/derived/createDerived.mjs"
     },
     "./derived": {
+      "types": "./dist/derived/index.d.ts",
       "import": "./dist/derived.mjs",
-      "types": "./dist/derived/index.d.ts"
+      "default": "./dist/derived.mjs"
     },
     "./devStoreRegistry": {
       "types": "./dist/devStoreRegistry.d.ts",
-      "import": "./dist/devStoreRegistry.mjs"
+      "import": "./dist/devStoreRegistry.mjs",
+      "default": "./dist/devStoreRegistry.mjs"
     },
     "./entities/createEntityAdapter": {
       "types": "./dist/entities/createEntityAdapter.d.ts",
-      "import": "./dist/entities/createEntityAdapter.mjs"
+      "import": "./dist/entities/createEntityAdapter.mjs",
+      "default": "./dist/entities/createEntityAdapter.mjs"
     },
     "./entities/createEntityStore": {
       "types": "./dist/entities/createEntityStore.d.ts",
-      "import": "./dist/entities/createEntityStore.mjs"
+      "import": "./dist/entities/createEntityStore.mjs",
+      "default": "./dist/entities/createEntityStore.mjs"
     },
     "./entities": {
+      "types": "./dist/entities/index.d.ts",
       "import": "./dist/entities.mjs",
-      "types": "./dist/entities/index.d.ts"
+      "default": "./dist/entities.mjs"
     },
     "./env": {
       "types": "./dist/env.d.ts",
-      "import": "./dist/env.mjs"
+      "import": "./dist/env.mjs",
+      "default": "./dist/env.mjs"
     },
     "./helpers/createObservable": {
       "types": "./dist/helpers/createObservable.d.ts",
-      "import": "./dist/helpers/createObservable.mjs"
+      "import": "./dist/helpers/createObservable.mjs",
+      "default": "./dist/helpers/createObservable.mjs"
     },
     "./helpers/getByPath": {
       "types": "./dist/helpers/getByPath.d.ts",
-      "import": "./dist/helpers/getByPath.mjs"
+      "import": "./dist/helpers/getByPath.mjs",
+      "default": "./dist/helpers/getByPath.mjs"
     },
     "./helpers/isPathAffected": {
       "types": "./dist/helpers/isPathAffected.d.ts",
-      "import": "./dist/helpers/isPathAffected.mjs"
+      "import": "./dist/helpers/isPathAffected.mjs",
+      "default": "./dist/helpers/isPathAffected.mjs"
     },
     "./helpers/parsePath": {
       "types": "./dist/helpers/parsePath.d.ts",
-      "import": "./dist/helpers/parsePath.mjs"
+      "import": "./dist/helpers/parsePath.mjs",
+      "default": "./dist/helpers/parsePath.mjs"
     },
     "./helpers/setByPath": {
       "types": "./dist/helpers/setByPath.d.ts",
-      "import": "./dist/helpers/setByPath.mjs"
+      "import": "./dist/helpers/setByPath.mjs",
+      "default": "./dist/helpers/setByPath.mjs"
     },
     "./helpers/shallowEqual": {
       "types": "./dist/helpers/shallowEqual.d.ts",
-      "import": "./dist/helpers/shallowEqual.mjs"
+      "import": "./dist/helpers/shallowEqual.mjs",
+      "default": "./dist/helpers/shallowEqual.mjs"
     },
     "./history": {
+      "types": "./dist/history/index.d.ts",
       "import": "./dist/history.mjs",
-      "types": "./dist/history/index.d.ts"
+      "default": "./dist/history.mjs"
     },
     "./index": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
     },
     "./middleware/cascade": {
       "types": "./dist/middleware/cascade.d.ts",
-      "import": "./dist/middleware/cascade.mjs"
+      "import": "./dist/middleware/cascade.mjs",
+      "default": "./dist/middleware/cascade.mjs"
     },
     "./middleware/historyMiddleware": {
       "types": "./dist/middleware/historyMiddleware.d.ts",
-      "import": "./dist/middleware/historyMiddleware.mjs"
+      "import": "./dist/middleware/historyMiddleware.mjs",
+      "default": "./dist/middleware/historyMiddleware.mjs"
     },
     "./middleware/isDisabled": {
       "types": "./dist/middleware/isDisabled.d.ts",
-      "import": "./dist/middleware/isDisabled.mjs"
+      "import": "./dist/middleware/isDisabled.mjs",
+      "default": "./dist/middleware/isDisabled.mjs"
     },
     "./middleware/loggerMiddleware": {
       "types": "./dist/middleware/loggerMiddleware.d.ts",
-      "import": "./dist/middleware/loggerMiddleware.mjs"
+      "import": "./dist/middleware/loggerMiddleware.mjs",
+      "default": "./dist/middleware/loggerMiddleware.mjs"
     },
     "./middleware/persistMiddleware": {
       "types": "./dist/middleware/persistMiddleware.d.ts",
-      "import": "./dist/middleware/persistMiddleware.mjs"
+      "import": "./dist/middleware/persistMiddleware.mjs",
+      "default": "./dist/middleware/persistMiddleware.mjs"
     },
     "./middleware/recorderMiddleware": {
       "types": "./dist/middleware/recorderMiddleware.d.ts",
-      "import": "./dist/middleware/recorderMiddleware.mjs"
+      "import": "./dist/middleware/recorderMiddleware.mjs",
+      "default": "./dist/middleware/recorderMiddleware.mjs"
     },
     "./middleware/reduxDevToolsMiddleware": {
       "types": "./dist/middleware/reduxDevToolsMiddleware.d.ts",
-      "import": "./dist/middleware/reduxDevToolsMiddleware.mjs"
+      "import": "./dist/middleware/reduxDevToolsMiddleware.mjs",
+      "default": "./dist/middleware/reduxDevToolsMiddleware.mjs"
     },
     "./middleware": {
+      "types": "./dist/middleware/index.d.ts",
       "import": "./dist/middleware.mjs",
-      "types": "./dist/middleware/index.d.ts"
+      "default": "./dist/middleware.mjs"
     },
     "./next": {
+      "types": "./dist/next/index.d.ts",
       "import": "./dist/next.mjs",
-      "types": "./dist/next/index.d.ts"
+      "default": "./dist/next.mjs"
     },
     "./react/DevStoreScopeContext": {
       "types": "./dist/react/DevStoreScopeContext.d.ts",
-      "import": "./dist/react/DevStoreScopeContext.mjs"
+      "import": "./dist/react/DevStoreScopeContext.mjs",
+      "default": "./dist/react/DevStoreScopeContext.mjs"
     },
     "./react/StoreContext": {
       "types": "./dist/react/StoreContext.d.ts",
-      "import": "./dist/react/StoreContext.mjs"
+      "import": "./dist/react/StoreContext.mjs",
+      "default": "./dist/react/StoreContext.mjs"
     },
     "./react/StoreProvider": {
       "types": "./dist/react/StoreProvider.d.ts",
-      "import": "./dist/react/StoreProvider.mjs"
+      "import": "./dist/react/StoreProvider.mjs",
+      "default": "./dist/react/StoreProvider.mjs"
     },
     "./react/createStoreHook": {
       "types": "./dist/react/createStoreHook.d.ts",
-      "import": "./dist/react/createStoreHook.mjs"
+      "import": "./dist/react/createStoreHook.mjs",
+      "default": "./dist/react/createStoreHook.mjs"
     },
     "./react/hooks/shared": {
       "types": "./dist/react/hooks/shared.d.ts",
-      "import": "./dist/react/hooks/shared.mjs"
+      "import": "./dist/react/hooks/shared.mjs",
+      "default": "./dist/react/hooks/shared.mjs"
     },
     "./react/hooks/useAsync": {
       "types": "./dist/react/hooks/useAsync.d.ts",
-      "import": "./dist/react/hooks/useAsync.mjs"
+      "import": "./dist/react/hooks/useAsync.mjs",
+      "default": "./dist/react/hooks/useAsync.mjs"
     },
     "./react/hooks/useAsyncValue": {
       "types": "./dist/react/hooks/useAsyncValue.d.ts",
-      "import": "./dist/react/hooks/useAsyncValue.mjs"
+      "import": "./dist/react/hooks/useAsyncValue.mjs",
+      "default": "./dist/react/hooks/useAsyncValue.mjs"
     },
     "./react/hooks/useDerived": {
       "types": "./dist/react/hooks/useDerived.d.ts",
-      "import": "./dist/react/hooks/useDerived.mjs"
+      "import": "./dist/react/hooks/useDerived.mjs",
+      "default": "./dist/react/hooks/useDerived.mjs"
     },
     "./react/hooks/useEntity": {
       "types": "./dist/react/hooks/useEntity.d.ts",
-      "import": "./dist/react/hooks/useEntity.mjs"
+      "import": "./dist/react/hooks/useEntity.mjs",
+      "default": "./dist/react/hooks/useEntity.mjs"
     },
     "./react/hooks/useStore": {
       "types": "./dist/react/hooks/useStore.d.ts",
-      "import": "./dist/react/hooks/useStore.mjs"
+      "import": "./dist/react/hooks/useStore.mjs",
+      "default": "./dist/react/hooks/useStore.mjs"
     },
     "./react/hooks/useStoreById": {
       "types": "./dist/react/hooks/useStoreById.d.ts",
-      "import": "./dist/react/hooks/useStoreById.mjs"
+      "import": "./dist/react/hooks/useStoreById.mjs",
+      "default": "./dist/react/hooks/useStoreById.mjs"
     },
     "./react/hooks/useStoreGetter": {
       "types": "./dist/react/hooks/useStoreGetter.d.ts",
-      "import": "./dist/react/hooks/useStoreGetter.mjs"
+      "import": "./dist/react/hooks/useStoreGetter.mjs",
+      "default": "./dist/react/hooks/useStoreGetter.mjs"
     },
     "./react/hooks/useStoreHistory": {
       "types": "./dist/react/hooks/useStoreHistory.d.ts",
-      "import": "./dist/react/hooks/useStoreHistory.mjs"
+      "import": "./dist/react/hooks/useStoreHistory.mjs",
+      "default": "./dist/react/hooks/useStoreHistory.mjs"
     },
     "./react/hooks/useStoreSetter": {
       "types": "./dist/react/hooks/useStoreSetter.d.ts",
-      "import": "./dist/react/hooks/useStoreSetter.mjs"
+      "import": "./dist/react/hooks/useStoreSetter.mjs",
+      "default": "./dist/react/hooks/useStoreSetter.mjs"
     },
     "./react/hooks/useStoreSync": {
       "types": "./dist/react/hooks/useStoreSync.d.ts",
-      "import": "./dist/react/hooks/useStoreSync.mjs"
+      "import": "./dist/react/hooks/useStoreSync.mjs",
+      "default": "./dist/react/hooks/useStoreSync.mjs"
     },
     "./react/useIsomorphicLayoutEffect": {
       "types": "./dist/react/useIsomorphicLayoutEffect.d.ts",
-      "import": "./dist/react/useIsomorphicLayoutEffect.mjs"
+      "import": "./dist/react/useIsomorphicLayoutEffect.mjs",
+      "default": "./dist/react/useIsomorphicLayoutEffect.mjs"
     },
     "./react": {
+      "types": "./dist/react/index.d.ts",
       "import": "./dist/react.mjs",
-      "types": "./dist/react/index.d.ts"
+      "default": "./dist/react.mjs"
     },
     "./rsc": {
-      "import": "./dist/rsc.mjs"
+      "types": "./dist/rsc/index.d.ts",
+      "import": "./dist/rsc.mjs",
+      "default": "./dist/rsc.mjs"
     },
     "./types/StoreTypes": {
-      "import": "./dist/types/StoreTypes.mjs"
+      "types": "./dist/types/StoreTypes.d.ts",
+      "import": "./dist/types/StoreTypes.mjs",
+      "default": "./dist/types/StoreTypes.mjs"
     },
     "./types": {
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/types.mjs",
-      "types": "./dist/types/index.d.ts"
+      "default": "./dist/types.mjs"
     },
     "./vue/injection": {
       "types": "./dist/vue/injection.d.ts",
-      "import": "./dist/vue/injection.mjs"
+      "import": "./dist/vue/injection.mjs",
+      "default": "./dist/vue/injection.mjs"
     },
     "./vue/useAsync": {
       "types": "./dist/vue/useAsync.d.ts",
-      "import": "./dist/vue/useAsync.mjs"
+      "import": "./dist/vue/useAsync.mjs",
+      "default": "./dist/vue/useAsync.mjs"
     },
     "./vue/useDerived": {
       "types": "./dist/vue/useDerived.d.ts",
-      "import": "./dist/vue/useDerived.mjs"
+      "import": "./dist/vue/useDerived.mjs",
+      "default": "./dist/vue/useDerived.mjs"
     },
     "./vue/useEntity": {
       "types": "./dist/vue/useEntity.d.ts",
-      "import": "./dist/vue/useEntity.mjs"
+      "import": "./dist/vue/useEntity.mjs",
+      "default": "./dist/vue/useEntity.mjs"
     },
     "./vue/useStore": {
       "types": "./dist/vue/useStore.d.ts",
-      "import": "./dist/vue/useStore.mjs"
+      "import": "./dist/vue/useStore.mjs",
+      "default": "./dist/vue/useStore.mjs"
     },
     "./vue/useStoreHistory": {
       "types": "./dist/vue/useStoreHistory.d.ts",
-      "import": "./dist/vue/useStoreHistory.mjs"
+      "import": "./dist/vue/useStoreHistory.mjs",
+      "default": "./dist/vue/useStoreHistory.mjs"
     },
     "./vue": {
+      "types": "./dist/vue/index.d.ts",
       "import": "./dist/vue.mjs",
-      "types": "./dist/vue/index.d.ts"
+      "default": "./dist/vue.mjs"
     }
   }
 }
