@@ -188,6 +188,54 @@ describe('useStoreSync: custom equalityFn', () => {
 });
 
 describe('useStoreSync: interaction with other subscribers', () => {
+  // The mount sync runs during the render, so waking a subscriber there is a setState from inside another
+  // component's render — React rejects it. The value still has to land, for anything rendering below.
+  it('does not wake subscribers on the mount sync, single path', () => {
+    const store = makeStore();
+    const listener = vi.fn();
+    store.subscribePath('count', listener);
+
+    renderHook(() => useStoreSync('count', 42), { wrapper: makeWrapper(store) });
+
+    expect(listener).not.toHaveBeenCalled();
+    expect(store.getState().count).toBe(42);
+  });
+
+  it('does not wake subscribers on the mount sync, multiple paths', () => {
+    const store = makeStore();
+    const countListener = vi.fn();
+    const titleListener = vi.fn();
+    store.subscribePath('count', countListener);
+    store.subscribePath('schema.title', titleListener);
+
+    renderHook(() => useStoreSync(['count', 'schema.title'], [42, 'synced']), { wrapper: makeWrapper(store) });
+
+    expect(countListener).not.toHaveBeenCalled();
+    expect(titleListener).not.toHaveBeenCalled();
+    expect(store.getState().count).toBe(42);
+    expect(store.getState().schema.title).toBe('synced');
+  });
+
+  // The documented trade-off of the escape hatch: it skips the layout effect, so its wakes land during the
+  // render. Callers opt into that for subtrees nothing else subscribes to.
+  it('wakes subscribers on every sync under syncStrategy render, mount included', () => {
+    const store = makeStore();
+    const listener = vi.fn();
+    store.subscribePath('count', listener);
+
+    let externalCount = 1;
+    const { rerender } = renderHook(() => useStoreSync('count', externalCount, { syncStrategy: 'render' }), {
+      wrapper: makeWrapper(store)
+    });
+
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    externalCount = 5;
+    rerender();
+
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
   it('notifies other path subscribers when value is synced', () => {
     const store = makeStore();
     const listener = vi.fn();

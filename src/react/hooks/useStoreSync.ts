@@ -36,13 +36,13 @@ function useStoreSyncMulti<TState extends object>(
   const shouldSync =
     enabled && (isFirstRender || (mode === 'sync' && values.some((v, i) => !Object.is(lastSyncedRef.current?.[i], v))));
 
-  const runSync = () => {
+  const runSync = (canPropagate = true) => {
     lastSyncedRef.current = values;
     // One wake pass for the whole multi-path sync instead of one per path.
     store.batch(() => {
       paths.forEach((p, i) => {
         const resolvedPath = typeof p === 'function' ? p(store.getState()) : p;
-        store.setState(resolvedPath, values[i] as PathValue<TState, PathOf<TState>>);
+        store.setState(resolvedPath, values[i] as PathValue<TState, PathOf<TState>>, { canPropagate });
       });
     });
   };
@@ -52,8 +52,11 @@ function useStoreSyncMulti<TState extends object>(
       runSync();
     }
   } else {
+    // Silent, like the single-path sync: this one runs DURING the render, so waking subscribers here would be a
+    // setState from inside another component's render. The value is in the store for anything rendering below,
+    // and every later sync goes through the layout effect, where waking is safe.
     if (shouldSync && isFirstRender) {
-      runSync();
+      runSync(false);
     }
 
     // eslint-disable-next-line react-hooks/rules-of-hooks

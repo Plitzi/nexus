@@ -310,8 +310,11 @@ function Bridge({ schema, style }: Props) {
   // Sync the whole state (merges)
   useStoreSync(undefined, fullState);
 
-  // Options: sync once on mount, or sync during render (no layout effect)
+  // The mount sync writes during the render (children see it right
+  // away) but silently; later syncs wake subscribers from an effect.
   useStoreSync('schema', schema, { mode: 'mount' });
+  // 'render' skips the effect: every sync wakes during the render, so
+  // only use it when nothing outside subscribes to those paths.
   useStoreSync('schema', schema, { syncStrategy: 'render' });
   useStoreSync('schema', schema, { enabled: isReady });
 }`

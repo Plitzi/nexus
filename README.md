@@ -352,6 +352,23 @@ useStoreSync('schema', schema, { enabled: false });         // disabled
 useStoreSync('schema', schema, { syncStrategy: 'render' }); // sync during render (no layout effect)
 ```
 
+### When the write happens
+
+The **mount** sync writes **during the render**, so whatever renders below already reads the value on that same
+pass — a child reading `schema` (or an action mirrored into the store) never sees a first render without it. That
+write is **silent** (`canPropagate: false`): waking a subscriber from inside a render is a `setState` during
+another component's render, which React rejects with _"Cannot update a component while rendering a different
+component"_.
+
+The value lands immediately either way — anything rendering after the write reads it. What the silent write does
+not do is wake a component that was **already mounted and subscribed** to that path elsewhere in the tree; that
+one picks the value up on its next render. This has always been how `StoreProvider` seeds its own state.
+
+Every **later** sync runs in a layout effect and wakes subscribers normally.
+
+`syncStrategy: 'render'` opts out of the layout effect entirely: every sync happens during the render, wakes
+included. Reach for it only when nothing outside the subtree subscribes to those paths, or React will warn.
+
 ## `useStoreGetter`
 
 Non-reactive. Returns a stable getter function that reads the current store value at call time (no re-renders).

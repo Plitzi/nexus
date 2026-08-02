@@ -316,6 +316,11 @@ export type UseStoreMultiOptions<TState extends object, Paths extends ReadonlyAr
 };
 
 export type UseStoreSyncOptions<T, TState extends object = object> = StoreHookReactiveOptions<T, TState> & {
+  // `afterRender` (default): the mount sync writes during the render — so anything rendering below already reads
+  // the value — but SILENTLY (`canPropagate: false`), because waking a subscriber from inside a render is a
+  // setState from another component's render and React rejects it. Every later sync runs in a layout effect,
+  // where waking is safe. `render` writes during the render every time, wakes included: use it only when nothing
+  // outside the subtree subscribes to those paths.
   syncStrategy?: 'render' | 'afterRender';
 };
 
@@ -323,6 +328,11 @@ export type UseStoreSyncMultiOptions<TState extends object = object> = Omit<
   StoreHookReactiveOptions<never, TState>,
   'equalityFn'
 > & {
+  // `afterRender` (default): the mount sync writes during the render — so anything rendering below already reads
+  // the value — but SILENTLY (`canPropagate: false`), because waking a subscriber from inside a render is a
+  // setState from another component's render and React rejects it. Every later sync runs in a layout effect,
+  // where waking is safe. `render` writes during the render every time, wakes included: use it only when nothing
+  // outside the subtree subscribes to those paths.
   syncStrategy?: 'render' | 'afterRender';
 };
 
