@@ -56,7 +56,7 @@ store.set('user.name', undefined, { unmount: true }); // DELETE the key (see "Re
 const off = store.watch('user.name', name => render(name)); // fires only for this path
 ```
 
-Every write takes an optional third argument, `SetStateOptions = { canPropagate?; unmount? }` — see [Removing a path](#removing-a-path-unmount). To freeze paths against writes, see [Read-only paths](#read-only-paths).
+Every write takes an optional third argument, `SetStateOptions = { canPropagate?; unmount?; raw? }` — see [Removing a path](#removing-a-path-unmount) and [Storing a function](#storing-a-function-raw). To freeze paths against writes, see [Read-only paths](#read-only-paths).
 
 ## What each piece is for
 
@@ -295,11 +295,14 @@ const itemCount = createDerived(rootStore, ['items'], ([items]) => items.length)
 Subscribe to store values. Triggers re-render only when the selected value changes.
 
 ```ts
-// Full state
+// Full state — the setter takes the value (or an updater), NOT a path
 const [state, setState] = useStore();
+setState(prev => ({ ...prev, count: prev.count + 1 }));
 
 // Single path
 const [name, setName] = useStore('user.name');
+setName(prev => `${prev}!`);                     // updater form
+setName(handler, { raw: true });                 // store a function — see "Storing a function"
 
 // Fallback for a possibly-undefined value — destructure a default (no `defaultValue` option):
 const [el = {}] = useStore(`schema.flat.${id}` as PathOf<MyState>);
@@ -350,6 +353,7 @@ useStoreSync(['schema', 'style'], [schema, style]);
 useStoreSync('schema', schema, { mode: 'mount' });          // sync on mount only
 useStoreSync('schema', schema, { enabled: false });         // disabled
 useStoreSync('schema', schema, { syncStrategy: 'render' }); // sync during render (no layout effect)
+useStoreSync('slots.onSave', onSave, { raw: true });        // mirror a CALLBACK prop (never run as an updater)
 ```
 
 ### When the write happens
@@ -415,7 +419,7 @@ setFlat(undefined, flatObj);        // replaces schema.flat
 
 ## Removing a path (`unmount`)
 
-Every write takes an optional third argument: `SetStateOptions = { canPropagate?; unmount? }`. `canPropagate: false` commits silently (no subscriber wakes); `unmount: true` **deletes** the key at `path` instead of writing `undefined`, so the path leaves no dead entry — an object key or array slot that would otherwise linger as `undefined`.
+Every write takes an optional third argument: `SetStateOptions = { canPropagate?; unmount?; raw? }`. `canPropagate: false` commits silently (no subscriber wakes); `unmount: true` **deletes** the key at `path` instead of writing `undefined`, so the path leaves no dead entry — an object key or array slot that would otherwise linger as `undefined`; `raw: true` stores a **function as a value** (see [Storing a function](#storing-a-function-raw)).
 
 Reach for it whenever you register/unregister things under a dynamic key (a source registry, a per-id cache) and don't want `Object.keys` / `Object.values` to see stale `undefined` holes.
 
@@ -431,6 +435,31 @@ Object.hasOwn(store.get('sources'), 'abc');             // false
 - Writing a value back later **recreates** the path, rebuilding any container the delete had emptied. In a scope chain the re-write delegates to the owning scope just like the original write.
 - `beforeChange` interceptors still run (with `value: undefined`), so a validation or [read-only](#read-only-paths) guard can veto the removal.
 - `unmount` is **ignored** for a whole-state write (`set(undefined, next)`).
+
+## Storing a function (`raw`)
+
+A bare function in a write is the **updater form** (`prev => next`) — it is called, and its return value is stored. So a
+callback you want to *keep* in state (an event handler, a renderer, a formatter) is otherwise indistinguishable from an
+updater and silently disappears, replaced by whatever it returned. `raw: true` writes the value verbatim: the function
+is stored, never called.
+
+```ts
+const onSave = (draft: Draft) => api.save(draft);
+
+store.set('handlers.onSave', onSave);              // ✗ calls onSave(prev) and stores the RESULT
+store.set('handlers.onSave', onSave, { raw: true }); // ✓ stores the function
+store.get('handlers.onSave') === onSave;             // true
+```
+
+- Works at **any depth** (single- and multi-segment paths) and through `withBase`, the scope chain (the write delegates
+  to the owning scope like any other), and every React setter: `useStore`, `useStoreSetter`, `useStoreSync`.
+- The setters returned by `useStore` take the same third argument: `setHandler(fn, { raw: true })` — for a single path
+  and for each setter of the multi-path form.
+- `beforeChange` interceptors see the **function itself** as `value` (it is never invoked to produce one).
+- `raw` changes nothing for non-function values, so it is safe to pass from a generic write helper.
+- Identity is the change signal: writing the same function reference twice is a no-op, so memoize (`useCallback`) any
+  handler you store from a component.
+- Functions do not survive `persistMiddleware` (JSON) or SSR serialization — store them client-side only.
 
 ## Read-only paths
 
@@ -1036,9 +1065,10 @@ All types live in `src/types/StoreTypes.ts`:
 | `PathValue<T, P>` | Value type at path `P` in `T` |
 | `PathOrFn<T>` | `PathOf<T>` or a function `(state: T) => PathOf<T>` |
 | `PathValues<T, Paths>` | Tuple of values for an array of paths |
-| `PathSetter<T, P>` | Setter function for a single path |
+| `PathSetter<T, P>` | Setter function for a single path — `(value \| updater, options?)` |
 | `PathSetters<T, Paths>` | Tuple of setters for an array of paths |
 | `MultiPathReturn<T, Paths>` | `[values, ...setters]` tuple |
+| `FullStateSetter<T>` | Setter returned by `useStore()` (no path): `(state \| updater, options?)` |
 | `StoreApi<T>` | `{ getState, getOwnState, getPath, setState, subscribe, subscribePath, subscribeChange, destroy? }` |
 | `StoreChange<T>` | `{ path, prev, next }` — payload of `subscribeChange` / middleware `onChange` |
 | `DevStoreEntry` | `{ uid, store, scopeId?, name? }` — a store registered in the dev-only registry (see [DevTools integration](#devtools-integration)) |
@@ -1050,9 +1080,10 @@ All types live in `src/types/StoreTypes.ts`:
 | `EntityAdapter<T>` | CRUD updaters + selectors from `createEntityAdapter` |
 | `EntityUpdater<T>` | `(map) => map` — an immutable entity-map update for `setState` |
 | `SetState<T>` | Full `setState` overload signature |
+| `SetStateOptions` | `{ canPropagate?, unmount?, raw? }` — third argument to every write |
 | `UseStoreOptions` | Options for `useStore` (mode, enabled, equalityFn, transformer, store, storeId) |
 | `UseStoreMultiOptions` | Options for multi-path `useStore` |
-| `UseStoreSyncOptions` | Options for `useStoreSync` (mode, enabled, syncStrategy) |
+| `UseStoreSyncOptions` | Options for `useStoreSync` (mode, enabled, syncStrategy, raw) |
 | `UseStoreSyncMultiOptions` | Options for multi-path `useStoreSync` |
 | `UseStoreGetterOptions` | Options for `useStoreGetter` |
 | `UseStoreSetterOptions` | Options for `useStoreSetter` |

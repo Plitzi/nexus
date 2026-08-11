@@ -269,11 +269,12 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       | TState
       | ((prev: TState) => TState),
     prevState: TState,
-    canPropagate: boolean
+    canPropagate: boolean,
+    isUpdater: boolean
   ): void => {
     const prevValue: unknown = path ? getByPath(prevState, path) : undefined;
     let resolvedValue: unknown = path
-      ? typeof value === 'function'
+      ? isUpdater
         ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(prevValue as PathValue<TState, P>)
         : value
       : undefined;
@@ -293,9 +294,9 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
 
     let nextState: TState = path
       ? setByPath(prevState, path, resolvedValue as PathValue<TState, P>)
-      : typeof value === 'function'
+      : isUpdater
         ? (value as (prev: TState) => TState)(prevState)
-        : { ...prevState, ...value };
+        : { ...prevState, ...(value as Partial<TState>) };
 
     // A whole-state write (`path === undefined`) intercepts the full next state, so a permission/validation
     // middleware can reject or replace the entire replacement.
@@ -358,8 +359,10 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       | ((prev: TState) => TState),
     options: SetStateOptions = {}
   ) => {
-    const { canPropagate = true, unmount = false } = options;
+    const { canPropagate = true, unmount = false, raw = false } = options;
     const prevState = getOwnState();
+    // A bare function is an updater; `raw` says this one is the value itself (a stored callback), so never call it.
+    const isUpdater = !raw && typeof value === 'function';
 
     // Reject prototype-pollution paths before any write. The cheap substring gate keeps normal paths a single scan.
     if (typeof path === 'string' && path.indexOf(PROTO_KEY) !== -1 && parsePath(path).indexOf(PROTO_KEY) !== -1) {
@@ -380,7 +383,8 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
         onDelegateToParent?.(path);
         parent.setState(path, value as PathValue<TState, P>, {
           canPropagate,
-          unmount
+          unmount,
+          raw
         });
 
         return;
@@ -388,7 +392,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     }
 
     if (typeof path !== 'string') {
-      handleFallback(path, value, prevState, canPropagate);
+      handleFallback(path, value, prevState, canPropagate, isUpdater);
 
       return;
     }
@@ -434,10 +438,9 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       // Mutate the live state in place (O(1), no top-level spread). Safe: snapshots are distinct clones, and this
       // rebinds a key rather than mutating any object already handed out.
       const prevValue: unknown = (prevState as Record<string, unknown>)[path];
-      const resolvedValue: unknown =
-        typeof value === 'function'
-          ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(prevValue as PathValue<TState, P>)
-          : value;
+      const resolvedValue: unknown = isUpdater
+        ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(prevValue as PathValue<TState, P>)
+        : value;
 
       let finalValue = resolvedValue;
       if (interceptors.length > 0) {
@@ -490,10 +493,9 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       // Resolve the leaf up front so interceptors see a concrete value, then write the (possibly transformed) result
       // as a plain value rather than re-running a setter function.
       const prevValue: unknown = getByPath(prevState, path);
-      const resolvedValue: unknown =
-        typeof value === 'function'
-          ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(prevValue as PathValue<TState, P>)
-          : value;
+      const resolvedValue: unknown = isUpdater
+        ? (value as (prev: PathValue<TState, P>) => PathValue<TState, P>)(prevValue as PathValue<TState, P>)
+        : value;
       const intercepted = runInterceptors(path, resolvedValue, prevValue);
       if (intercepted === CANCEL) {
         return;
@@ -501,7 +503,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
 
       result = writeByPath(prevState, path, segments, intercepted, false) as TState | typeof UNCHANGED;
     } else {
-      result = writeByPath(prevState, path, segments, value, typeof value === 'function') as TState | typeof UNCHANGED;
+      result = writeByPath(prevState, path, segments, value, isUpdater) as TState | typeof UNCHANGED;
     }
 
     if (result === UNCHANGED) {

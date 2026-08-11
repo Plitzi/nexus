@@ -61,6 +61,7 @@ const PAGES: DocPage[] = [
           { id: 'use-store', label: 'useStore' },
           { id: 'use-store-sync', label: 'useStoreSync / Getter / Setter' },
           { id: 'store-provider', label: 'StoreProvider' },
+          { id: 'write-options', label: 'Write options' },
           { id: 'key-types', label: 'Key types' }
         ]
       },

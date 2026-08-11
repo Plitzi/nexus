@@ -38,7 +38,15 @@ export type PathValue<T, P> = T extends undefined
       : never;
 
 export type PathSetter<TState extends object, P extends PathOf<TState>> = (
-  value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)
+  value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>),
+  options?: SetStateOptions
+) => void;
+
+// The setter `useStore()` (no path) returns. It writes the WHOLE state — the value form merges over it, the updater
+// form receives the previous state — so it takes NO `path` argument, unlike `StoreApi.setState`.
+export type FullStateSetter<TState extends object> = (
+  value: TState | Partial<TState> | ((prev: TState) => TState),
+  options?: SetStateOptions
 ) => void;
 
 export type PathValues<TState extends object, Paths extends ReadonlyArray<PathOf<TState>>> = {
@@ -138,7 +146,10 @@ export type Listener = (changedPath?: Path) => void;
 // Third argument to every write. `canPropagate` (default true) gates subscriber wakes; `unmount` DELETES the key at
 // `path` instead of writing `undefined` — so the path leaves no dead entry (an object key or array slot that lingers
 // as `undefined`). `unmount` is meaningless for a whole-state write (`path === undefined`) and ignored there.
-export type SetStateOptions = { canPropagate?: boolean; unmount?: boolean };
+// `raw` writes the value verbatim: a function is STORED rather than run as an updater — the only way to keep a
+// callback (an event handler, a renderer) in state, since a bare function is otherwise indistinguishable from
+// `prev => next`.
+export type SetStateOptions = { canPropagate?: boolean; unmount?: boolean; raw?: boolean };
 
 export type SetState<T> = {
   (path: undefined, value: T | ((prev: T) => T), options?: SetStateOptions): void;
@@ -284,8 +295,8 @@ export type PathOrFnSetter<TState extends object, Entry> =
     : Entry extends (state: TState) => infer P
       ? P extends PathOf<TState>
         ? PathSetter<TState, P>
-        : (value: unknown) => void
-      : (value: unknown) => void;
+        : (value: unknown, options?: SetStateOptions) => void
+      : (value: unknown, options?: SetStateOptions) => void;
 
 export type PathOrFnSetters<TState extends object, Entries extends ReadonlyArray<PathOrFn<TState>>> = {
   [I in keyof Entries]: PathOrFnSetter<TState, Entries[I]>;
@@ -300,8 +311,8 @@ export type UseStoreReturn<TState extends object, TArg> =
   TArg extends PathOf<TState>
     ? [PathValue<TState, TArg>, PathSetter<TState, TArg>]
     : TArg extends (state: TState) => unknown
-      ? [unknown, (value: unknown) => void]
-      : [TState, StoreApi<TState>['setState']];
+      ? [unknown, (value: unknown, options?: SetStateOptions) => void]
+      : [TState, FullStateSetter<TState>];
 
 export type UseStoreOptions<T, TState extends object = object> = StoreHookReactiveOptions<T, TState> & {
   transformer?: (value: T) => unknown;
@@ -322,6 +333,8 @@ export type UseStoreSyncOptions<T, TState extends object = object> = StoreHookRe
   // where waking is safe. `render` writes during the render every time, wakes included: use it only when nothing
   // outside the subtree subscribes to those paths.
   syncStrategy?: 'render' | 'afterRender';
+  // Mirror function values (a callback prop) as-is instead of running them as updaters — see `SetStateOptions.raw`.
+  raw?: boolean;
 };
 
 export type UseStoreSyncMultiOptions<TState extends object = object> = Omit<
@@ -334,6 +347,8 @@ export type UseStoreSyncMultiOptions<TState extends object = object> = Omit<
   // where waking is safe. `render` writes during the render every time, wakes included: use it only when nothing
   // outside the subtree subscribes to those paths.
   syncStrategy?: 'render' | 'afterRender';
+  // Mirror function values (a callback prop) as-is instead of running them as updaters — see `SetStateOptions.raw`.
+  raw?: boolean;
 };
 
 export type GetValueFn<TState extends object> = {

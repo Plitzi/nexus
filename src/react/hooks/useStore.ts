@@ -14,6 +14,7 @@ import {
 import shallowEqual from '../../helpers/shallowEqual';
 
 import type {
+  FullStateSetter,
   MultiPathReturn,
   PathOf,
   PathOrFn,
@@ -23,6 +24,7 @@ import type {
   PathSetters,
   PathValue,
   PathValues,
+  SetStateOptions,
   StoreApi,
   UseStoreMultiOptions,
   UseStoreOptions,
@@ -38,7 +40,7 @@ function useSingleStore<TState extends object>(
   store: StoreApi<TState>,
   pathOrFn: PathOf<TState> | ((state: TState) => PathOf<TState>) | undefined,
   options: UseStoreOptions<any>
-): [unknown, (value: unknown) => void] {
+): [unknown, (value: unknown, setOptions?: SetStateOptions) => void] {
   const mode = options.mode ?? 'sync';
   const enabled = options.enabled ?? true;
   const isFullState = pathOrFn === undefined;
@@ -92,13 +94,13 @@ function useSingleStore<TState extends object>(
   const result = useMemo(() => (transformerRef.current ? transformerRef.current(raw) : raw), [raw]);
 
   const setState = useCallback(
-    (value: unknown) => {
+    (value: unknown, setOptions?: SetStateOptions) => {
       if (isFullState) {
-        store.setState(undefined, value as TState);
+        store.setState(undefined, value as TState, setOptions);
       } else if (typeof pathOrFn === 'function') {
-        store.setState(pathOrFn(store.getState()), value as PathValue<TState, PathOf<TState>>);
+        store.setState(pathOrFn(store.getState()), value as PathValue<TState, PathOf<TState>>, setOptions);
       } else {
-        store.setState(pathOrFn, value as PathValue<TState, PathOf<TState>>);
+        store.setState(pathOrFn, value as PathValue<TState, PathOf<TState>>, setOptions);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -150,7 +152,7 @@ function useMultiStore<TState extends object>(
 function useStore<TState extends object>(
   arg?: undefined,
   options?: UseStoreOptions<TState>
-): [TState, StoreApi<TState>['setState']];
+): [TState, FullStateSetter<TState>];
 
 function useStore<TState extends object, P extends PathOf<TState>>(
   path: P,

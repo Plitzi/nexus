@@ -7,6 +7,7 @@ import useStoreSetterBase from './hooks/useStoreSetter';
 import useStoreSyncBase from './hooks/useStoreSync';
 
 import type {
+  FullStateSetter,
   GetterTuple,
   GetValueFn,
   GetValueFromBaseFn,
@@ -21,7 +22,6 @@ import type {
   PathValues,
   SetFromBaseFn,
   SetStateFn,
-  StoreApi,
   UseStoreGetterOptions,
   UseStoreMultiOptions,
   UseStoreOptions,
@@ -31,24 +31,21 @@ import type {
 } from '../types';
 
 export const createStoreHook = <TState extends object>() => {
-  function useStore(options?: UseStoreOptions<TState, TState>): [TState, StoreApi<TState>['setState']];
+  function useStore(options?: UseStoreOptions<TState, TState>): [TState, FullStateSetter<TState>];
 
   function useStore<P extends PathOf<TState>>(
     path: P,
     options?: UseStoreOptions<PathValue<TState, P>, TState> & {
       transformer?: never;
     }
-  ): [
-    PathValue<TState, P>,
-    (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void
-  ];
+  ): [PathValue<TState, P>, PathSetter<TState, P>];
 
   function useStore<P extends PathOf<TState>, TResult>(
     path: P,
     options: UseStoreOptions<PathValue<TState, P>, TState> & {
       transformer: (value: PathValue<TState, P>) => TResult;
     }
-  ): [TResult, (value: PathValue<TState, P> | ((prev: PathValue<TState, P>) => PathValue<TState, P>)) => void];
+  ): [TResult, PathSetter<TState, P>];
 
   function useStore<P extends PathOf<TState>>(
     pathFn: (state: TState) => P,

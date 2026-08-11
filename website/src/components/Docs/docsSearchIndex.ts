@@ -49,7 +49,10 @@ export const DOCS_SEARCH_INDEX: DocSearchEntry[] = [
       'historyMiddleware', 'reduxDevToolsMiddleware', 'beforeChange', 'CANCEL',
       'getStoreHistory', 'useStoreHistory', 'batch', 'PathOf', 'PathValue',
       'scoped store', 'derived', 'entity', 'async', 'suspense', 'time-travel',
-      'history', 'memoized', 'computed'
+      'history', 'memoized', 'computed',
+      'SetStateOptions', 'write options', 'raw', 'store a function', 'store a callback',
+      'function value', 'handler in state', 'updater', 'prev => next', 'unmount', 'canPropagate',
+      'PathSetter', 'FullStateSetter'
     ],
     description:
       'Full API reference: createStore, hooks, StoreProvider, derived values, async/Suspense, entity adapter, entity store, middleware pipeline, time-travel, and types.'

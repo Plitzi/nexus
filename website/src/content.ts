@@ -117,6 +117,13 @@ export const FEATURES: Feature[] = [
       'set(path, undefined, { unmount: true }) removes the key entirely instead of leaving a dead undefined behind — arrays are spliced, siblings and untouched subtrees are shared. Ideal for registries keyed by dynamic id: write a value back later and the path is recreated.'
   },
   {
+    icon: '🎛️',
+    group: 'Core',
+    title: 'Callbacks are state too',
+    description:
+      'A bare function is the updater form (prev => next), so storing a callback would run it instead. set(path, fn, { raw: true }) writes it verbatim — handlers, renderers and formatters live in state like any other value, at any depth and from every React setter.'
+  },
+  {
     icon: '🔒',
     group: 'Core',
     title: 'Read-only paths',
@@ -290,6 +297,11 @@ function Profile() {
   // With a fallback — a destructuring default (use a hoisted const for objects)
   const [el = {}] = useStore(\`schema.flat.\${id}\` as PathOf<State>);
 
+  // Every setter takes the write options: updater form by default,
+  // { raw: true } to STORE a function instead of running it.
+  const [, setOnSave] = useStore('slots.onSave');
+  setOnSave(handleSave, { raw: true });
+
   return <input value={name} onChange={e => setName(e.target.value)} />;
 }`
   },
@@ -317,6 +329,9 @@ function Bridge({ schema, style }: Props) {
   // only use it when nothing outside subscribes to those paths.
   useStoreSync('schema', schema, { syncStrategy: 'render' });
   useStoreSync('schema', schema, { enabled: isReady });
+  // Mirroring a CALLBACK prop: without raw it would be run as an
+  // updater (prev => next) and its return value stored instead.
+  useStoreSync('slots.onSave', onSave, { raw: true });
 }`
   },
   {
@@ -585,7 +600,7 @@ store.batch(() => {
   },
   {
     id: 'guardrails',
-    label: 'unmount & read-only',
+    label: 'unmount, raw & read-only',
     category: 'advanced',
     code: `import { createStore } from '@plitzi/nexus';
 
@@ -600,7 +615,7 @@ store.set('config.theme', 'dark'); // dev: throws · prod: dropped
 store.set('config.other', 'ok');   // sibling — allowed
 
 // unmount: DELETE a key instead of leaving a dead \`undefined\`.
-// The third arg is { canPropagate?, unmount? }.
+// The third arg is { canPropagate?, unmount?, raw? }.
 store.set('sources.abc', { id: 'abc' });          // register
 store.set('sources.abc', undefined, { unmount: true }); // remove
 Object.hasOwn(store.get('sources'), 'abc');       // false
@@ -610,7 +625,14 @@ Object.hasOwn(store.get('sources'), 'abc');       // false
 store.set('list.1', undefined, { unmount: true }); // [a, c]
 
 // Write a value back later and the path is recreated:
-store.set('sources.abc', { id: 'abc-again' });    // key returns`
+store.set('sources.abc', { id: 'abc-again' });    // key returns
+
+// raw: STORE a function instead of running it as an updater
+// (prev => next). Without it, the callback is called and its
+// return value is what lands in state.
+store.set('count', n => n + 1);                   // updater —
+store.set('slots.onSave', onSave, { raw: true }); // stores the fn
+store.get('slots.onSave') === onSave;             // true`
   },
   {
     id: 'async',

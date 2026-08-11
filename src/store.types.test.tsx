@@ -43,7 +43,7 @@ import createStore from './createStore';
 import { createStoreHook } from './react';
 import { StoreContext } from './react/StoreProvider';
 
-import type { StoreApi } from './types';
+import type { SetStateOptions, StoreApi } from './types';
 import type { ReactNode } from 'react';
 
 // ─── shared state shape ───────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ describe('useStore types — string path', () => {
 
     expectTypeOf(value).toEqualTypeOf<number>();
     expectTypeOf<HasUndefined<typeof value>>().toEqualTypeOf<'no'>();
-    expectTypeOf(setter).toEqualTypeOf<(v: number | ((prev: number) => number)) => void>();
+    expectTypeOf(setter).toEqualTypeOf<(v: number | ((prev: number) => number), options?: SetStateOptions) => void>();
   });
 
   // [3] optional path, no options
@@ -103,7 +103,7 @@ describe('useStore types — string path', () => {
 
     expectTypeOf(value).toEqualTypeOf<string | undefined>();
     expectTypeOf(setter).toEqualTypeOf<
-      (v: string | undefined | ((prev: string | undefined) => string | undefined)) => void
+      (v: string | undefined | ((prev: string | undefined) => string | undefined), options?: SetStateOptions) => void
     >();
   });
 
@@ -129,7 +129,7 @@ describe('useStore types — string path', () => {
 
     expectTypeOf(value).toEqualTypeOf<string>();
     // setter is NOT transformed — it still accepts the raw PathValue
-    expectTypeOf(setter).toEqualTypeOf<(v: number | ((prev: number) => number)) => void>();
+    expectTypeOf(setter).toEqualTypeOf<(v: number | ((prev: number) => number), options?: SetStateOptions) => void>();
   });
 
   // [5b] { transformer } returning an object
@@ -159,7 +159,7 @@ describe('useStore types — function path', () => {
 
     expectTypeOf(value).toEqualTypeOf<number>();
     expectTypeOf<HasUndefined<typeof value>>().toEqualTypeOf<'no'>();
-    expectTypeOf(setter).toEqualTypeOf<(v: number | ((prev: number) => number)) => void>();
+    expectTypeOf(setter).toEqualTypeOf<(v: number | ((prev: number) => number), options?: SetStateOptions) => void>();
   });
 
   // [8] optional path fn, no options
@@ -182,7 +182,7 @@ describe('useStore types — function path', () => {
     const [value, setter] = result.current;
 
     expectTypeOf(value).toEqualTypeOf<string>();
-    expectTypeOf(setter).toEqualTypeOf<(v: number | ((prev: number) => number)) => void>();
+    expectTypeOf(setter).toEqualTypeOf<(v: number | ((prev: number) => number), options?: SetStateOptions) => void>();
   });
 
   // [10b] { transformer } returning an object
@@ -264,8 +264,8 @@ describe('useStore types — multi string path', () => {
     const [value, setCount, setName] = result.current;
 
     expectTypeOf(value).toEqualTypeOf<string>();
-    expectTypeOf(setCount).toEqualTypeOf<(v: number | ((prev: number) => number)) => void>();
-    expectTypeOf(setName).toEqualTypeOf<(v: string | ((prev: string) => string)) => void>();
+    expectTypeOf(setCount).toEqualTypeOf<(v: number | ((prev: number) => number), options?: SetStateOptions) => void>();
+    expectTypeOf(setName).toEqualTypeOf<(v: string | ((prev: string) => string), options?: SetStateOptions) => void>();
   });
 
   // [17] setters typed per-path
@@ -276,11 +276,11 @@ describe('useStore types — multi string path', () => {
     });
     const [, setCount, setTag, setName] = result.current;
 
-    expectTypeOf(setCount).toEqualTypeOf<(v: number | ((prev: number) => number)) => void>();
+    expectTypeOf(setCount).toEqualTypeOf<(v: number | ((prev: number) => number), options?: SetStateOptions) => void>();
     expectTypeOf(setTag).toEqualTypeOf<
-      (v: string | undefined | ((prev: string | undefined) => string | undefined)) => void
+      (v: string | undefined | ((prev: string | undefined) => string | undefined), options?: SetStateOptions) => void
     >();
-    expectTypeOf(setName).toEqualTypeOf<(v: string | ((prev: string) => string)) => void>();
+    expectTypeOf(setName).toEqualTypeOf<(v: string | ((prev: string) => string), options?: SetStateOptions) => void>();
   });
 });
 
@@ -314,8 +314,8 @@ describe('useStore types — mixed PathOrFn array', () => {
     const [value, setCount, setName] = result.current;
 
     expectTypeOf(value).toEqualTypeOf<string>();
-    expectTypeOf(setCount).toEqualTypeOf<(v: number | ((prev: number) => number)) => void>();
-    expectTypeOf(setName).toEqualTypeOf<(v: string | ((prev: string) => string)) => void>();
+    expectTypeOf(setCount).toEqualTypeOf<(v: number | ((prev: number) => number), options?: SetStateOptions) => void>();
+    expectTypeOf(setName).toEqualTypeOf<(v: string | ((prev: string) => string), options?: SetStateOptions) => void>();
   });
 
   // [22] setters typed per-path (string and function entries)
@@ -326,9 +326,9 @@ describe('useStore types — mixed PathOrFn array', () => {
     });
     const [, setCount, setTag] = result.current;
 
-    expectTypeOf(setCount).toEqualTypeOf<(v: number | ((prev: number) => number)) => void>();
+    expectTypeOf(setCount).toEqualTypeOf<(v: number | ((prev: number) => number), options?: SetStateOptions) => void>();
     expectTypeOf(setTag).toEqualTypeOf<
-      (v: string | undefined | ((prev: string | undefined) => string | undefined)) => void
+      (v: string | undefined | ((prev: string | undefined) => string | undefined), options?: SetStateOptions) => void
     >();
   });
 });

@@ -1,5 +1,42 @@
 # @plitzi/nexus
 
+## 1.1.0
+
+### Added
+
+- **`raw` — store a function as a value.** A bare function in a write is the updater form (`prev => next`), so a
+  callback you wanted to *keep* in state (an event handler, a renderer, a formatter) was called instead of stored,
+  and what landed in the store was its return value — `undefined` for a handler that returns nothing. There is no
+  way to tell the two apart at runtime, so the intent is now explicit: `set(path, fn, { raw: true })` writes the
+  value verbatim and never calls it. Works at any depth, through `withBase`, down the scope chain, and from every
+  React setter. `beforeChange` interceptors see the function itself.
+- **`useStoreSync(path, value, { raw: true })`** mirrors a callback prop into the store without running it — the
+  same option, at the hook that exists to mirror props.
+
+### Fixed
+
+- **React setters dropped their options argument.** The setters returned by `useStore` (single- and multi-path)
+  called `store.setState(path, value)` and discarded anything else, so `canPropagate` / `unmount` — and now `raw` —
+  were unreachable from a component. They forward the third argument now: `setValue(v, { unmount: true })`.
+- **`useStore()` (no path) advertised the wrong setter type.** It was typed as `StoreApi<T>['setState']`, whose
+  first parameter is a *path*, while the runtime setter has always taken the state value directly. Writing
+  `setState('a.b', v)` type-checked and then spread a path string into the state at runtime. It is now
+  `FullStateSetter<T>` — `(state | updater, options?)` — which is what the hook actually does.
+
+### Types
+
+- `SetStateOptions` gains `raw?: boolean`; `PathSetter<T, P>` and the multi-path setters gain the optional
+  `options` argument; new `FullStateSetter<T>`. `createStoreHook`'s string-path overloads now reuse `PathSetter`
+  instead of restating it, so the two signatures can no longer drift.
+
+### Notes
+
+- Default behaviour is unchanged: without `raw`, a function is still an updater. That contract now has its own
+  regression net (`src/updaterForm.test.tsx`) covering every write route — single-segment, multi-segment under
+  **both** `writeByPath` implementations, arrays, whole-state, `withBase`, entity-adapter updaters, the scope
+  chain, batches, interceptors — plus the two cases where the updater must *not* run (a read-only path throws
+  before resolving it; an `unmount` never touches the value).
+
 ## 1.0.1
 
 ### Fixed

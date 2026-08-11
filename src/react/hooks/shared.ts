@@ -6,7 +6,7 @@ import { useContext, useCallback, useMemo, useSyncExternalStore } from 'react';
 import getByPath from '../../helpers/getByPath';
 import { findStoreInRegistry, StoreContext, StoreRegistryContext } from '../StoreContext';
 
-import type { PathOf, PathOrFn, StoreApi, SyncMode } from '../../types';
+import type { PathOf, PathOrFn, SetStateOptions, StoreApi, SyncMode } from '../../types';
 import type { RefObject } from 'react';
 
 export const defaultMultiEqualityFn = (a: unknown[], b: unknown[]): boolean => {
@@ -127,15 +127,15 @@ export function useMultiSetters<TState extends object>(
   store: StoreApi<TState>,
   pathsRef: RefObject<ReadonlyArray<PathOrFn<TState>>>,
   pathsKey: string
-): Array<(value: any) => void> {
+): Array<(value: any, options?: SetStateOptions) => void> {
   const length = pathsRef.current.length;
 
   return useMemo(
     () =>
-      Array.from({ length }, (_, i) => (value: any) => {
+      Array.from({ length }, (_, i) => (value: any, options?: SetStateOptions) => {
         const p = pathsRef.current[i];
         const resolvedPath = typeof p === 'function' ? p(store.getState()) : p;
-        store.setState(resolvedPath, value);
+        store.setState(resolvedPath, value, options);
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, pathsKey]

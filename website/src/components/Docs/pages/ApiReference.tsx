@@ -82,10 +82,12 @@ const ApiReference = () => (
             <code>setState</code>
           </td>
           <td>
-            <code>(p, value | (prev =&gt; value)) =&gt; void</code>
+            <code>(p, value | (prev =&gt; value), opts?) =&gt; void</code>
           </td>
           <td>
-            Write a path. <code>setState(undefined, partial)</code> merges the whole state.
+            Write a path. <code>setState(undefined, partial)</code> merges the whole state. Options:{' '}
+            <code>&#123; canPropagate?, unmount?, raw? &#125;</code> — see{' '}
+            <a href="#/docs/api?anchor=write-options">write options</a>.
           </td>
         </tr>
         <tr>
@@ -198,7 +200,14 @@ const [v] = useStore(s => \`style.\${s.mode}\` as PathOf<State>);
 
 // Transformer (memoized); fallback via a destructuring default
 const [upper] = useStore('user.name', { transformer: v => v.toUpperCase() });
-const [el = {}] = useStore(\`items.\${id}\` as PathOf<State>);`}
+const [el = {}] = useStore(\`items.\${id}\` as PathOf<State>);
+
+// Every setter takes the write options as a 2nd argument
+setName(prev => \`\${prev}!\`);            // updater form
+setName(handleSave, { raw: true });     // STORE a function
+
+// No path → the setter writes the whole state (value or prev => next)
+const [state, setState] = useStore();`}
     />
 
     <h3 id="use-store-sync">useStoreSync · useStoreGetter · useStoreSetter</h3>
@@ -214,7 +223,10 @@ const [el = {}] = useStore(\`items.\${id}\` as PathOf<State>);`}
           <td>
             <code>useStoreSync(path, value, opts?)</code>
           </td>
-          <td>Push an external value (props) INTO the store. Write-only, no subscription.</td>
+          <td>
+            Push an external value (props) INTO the store. Write-only, no subscription. Add{' '}
+            <code>&#123; raw: true &#125;</code> to mirror a <em>callback</em> prop.
+          </td>
         </tr>
         <tr>
           <td>
@@ -226,7 +238,10 @@ const [el = {}] = useStore(\`items.\${id}\` as PathOf<State>);`}
           <td>
             <code>useStoreSetter(basePath?, opts?)</code>
           </td>
-          <td>A stable setter — write without subscribing (no re-render on change).</td>
+          <td>
+            A stable setter — write without subscribing (no re-render on change). Takes the same write options as{' '}
+            <code>setState</code>.
+          </td>
         </tr>
         <tr>
           <td>
@@ -254,6 +269,33 @@ const [el = {}] = useStore(\`items.\${id}\` as PathOf<State>);`}
 <StoreProvider value={initial} middlewares={[persistMiddleware({ key: 'app' })]}>...</StoreProvider>`}
     />
 
+    <h2 id="write-options">Write options</h2>
+    <p>
+      Every write — <code>setState</code>, <code>set</code>, a <code>withBase</code> setter, the setters{' '}
+      <code>useStore</code> returns, <code>useStoreSetter</code> — takes the same optional third argument.
+    </p>
+    <CodeBlock
+      code={`type SetStateOptions = { canPropagate?: boolean; unmount?: boolean; raw?: boolean };
+
+// canPropagate: false — commit silently (no subscriber wakes)
+store.set('count', 1, { canPropagate: false });
+
+// unmount: DELETE the key instead of writing undefined (no dead entry)
+store.set('sources.abc', undefined, { unmount: true });
+
+// raw: STORE a function instead of running it as an updater
+store.set('count', n => n + 1);                    // updater — n + 1 is stored
+store.set('slots.onSave', onSave, { raw: true });  // the function itself is stored`}
+    />
+    <p>
+      Without <code>raw</code>, a function is the <strong>updater form</strong> (<code>prev =&gt; next</code>): it is
+      called and its return value is what lands in state — so a callback you meant to keep would silently become
+      whatever it returned. The two are indistinguishable at runtime, hence the explicit flag. It works at any depth,
+      down the scope chain, and from every React setter; <code>beforeChange</code> interceptors see the function
+      itself. Functions do not survive <code>persistMiddleware</code> (JSON) or SSR serialization — keep them
+      client-side.
+    </p>
+
     <h2 id="key-types">Key types</h2>
     <table>
       <thead>
@@ -274,6 +316,23 @@ const [el = {}] = useStore(\`items.\${id}\` as PathOf<State>);`}
             <code>PathValue&lt;T, P&gt;</code>
           </td>
           <td>Value type at path P.</td>
+        </tr>
+        <tr>
+          <td>
+            <code>SetStateOptions</code>
+          </td>
+          <td>
+            <code>&#123; canPropagate?, unmount?, raw? &#125;</code> — third argument to every write.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>PathSetter&lt;T, P&gt;</code> · <code>FullStateSetter&lt;T&gt;</code>
+          </td>
+          <td>
+            <code>(value | (prev =&gt; value), opts?) =&gt; void</code> — what <code>useStore</code> returns for a path,
+            and for no path.
+          </td>
         </tr>
         <tr>
           <td>
