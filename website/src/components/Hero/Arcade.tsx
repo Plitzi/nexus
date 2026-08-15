@@ -126,7 +126,9 @@ const Arcade = () => {
 
   return (
     <StoreProvider value={HERO_INITIAL} middlewares={HERO_MIDDLEWARES}>
-      <div ref={rootRef} className="relative flex w-full flex-col xl:block xl:h-full">
+      {/* A container, so the overlays inside react to the playfield's width rather than the window's: at xl the open log
+          dock narrows this box well below what the viewport suggests. */}
+      <div ref={rootRef} className="@container relative flex w-full flex-col xl:block xl:h-full">
         <div className={playfieldClass}>
           {playing ? gameNode : <ArcadeMenu games={GAMES} onPlay={handlePlay} onPurge={purgeData} />}
           {/* Subtle side rails marking where the play area ends. */}
@@ -150,7 +152,7 @@ const Arcade = () => {
         {/* Power-up legend, pinned to the top-left for games that drop them. A narrow playfield has no room beside the
             scoreboard, so there it drops below it instead of underneath it. */}
         {playing && active.powerups && (
-          <div className="pointer-events-none absolute inset-x-0 top-32 z-10 flex justify-start px-4 md:top-16">
+          <div className="pointer-events-none absolute inset-x-0 top-32 z-10 flex justify-start px-4 @md:top-16">
             <PowerLegend powerups={active.powerups} />
           </div>
         )}

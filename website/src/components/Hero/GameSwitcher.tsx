@@ -6,10 +6,11 @@ export type GameSwitcherProps = {
   onSelect: (id: string) => void;
 };
 
-// The full cabinet list never fits a phone, so the rail scrolls sideways there. `justify-start` while it overflows is
-// deliberate: a centered flex row puts its overflow out of reach of the scroller.
+// The full cabinet list never fits a phone — nor the hero column with the log dock open — so the rail scrolls sideways
+// there. `justify-start` while it overflows is deliberate: a centered flex row puts its overflow out of reach of the
+// scroller. Centering waits for the arcade itself to be wide enough, which is not the same as the window being wide.
 const GameSwitcher = ({ games, active, onSelect }: GameSwitcherProps) => (
-  <div className="pointer-events-auto flex w-full justify-start overflow-x-auto px-4 sm:justify-center">
+  <div className="pointer-events-auto flex w-full justify-start overflow-x-auto px-4 @2xl:justify-center">
     <div className="border-ink-700/70 bg-ink-900/70 flex items-center gap-1 rounded-full border p-1 backdrop-blur-md">
       {games.map(game => (
         <button

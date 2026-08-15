@@ -1,12 +1,14 @@
-import { useCallback, useState } from 'react';
+import { type CSSProperties, useCallback, useState } from 'react';
 
 import Arcade from './Arcade';
+import { useDockInset } from './dockStore';
 import LogDock from './LogDock';
 import { GITHUB_URL, INSTALL_COMMAND } from '../../content';
 import { GithubStars, NpmDownloads } from '../StatBadge';
 
 const Hero = () => {
   const [copied, setCopied] = useState(false);
+  const dockInset = useDockInset();
 
   const handleCopy = useCallback(() => {
     navigator.clipboard
@@ -27,8 +29,13 @@ const Hero = () => {
 
       {/* The arcade is one self-contained, movable component. Up to xl it stacks under the copy as a normal block that
           sizes itself; from xl — the first width where a 36rem column of copy and a half-width playfield both fit — it
-          moves into the right column, shifted off the edge so it reads as a centered, framed playfield. */}
-      <div className="relative order-2 mx-auto w-full max-w-400 pb-12 xl:absolute xl:inset-y-0 xl:right-12 xl:order-0 xl:mx-0 xl:w-[52%] xl:max-w-none xl:pb-0">
+          moves into the right column, shifted off the edge so it reads as a centered, framed playfield. There it also
+          keeps the open log dock's width clear (`--dock-inset`), so the panel never sits on top of the cabinets; the
+          arcade widens again, animated in step with the panel, the moment you collapse it. */}
+      <div
+        style={{ '--dock-inset': `${dockInset}px` } as CSSProperties}
+        className="relative order-2 mx-auto w-full max-w-400 pb-12 xl:absolute xl:inset-y-0 xl:right-12 xl:order-0 xl:mx-0 xl:w-[52%] xl:max-w-none xl:pr-(--dock-inset) xl:pb-0 xl:transition-[padding] xl:duration-300 xl:ease-out"
+      >
         <Arcade />
       </div>
 

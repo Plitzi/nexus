@@ -1,12 +1,11 @@
 import { StoreProvider } from '@plitzi/nexus/react';
-import { type CSSProperties, type PointerEvent, useCallback, useRef, useState } from 'react';
+import { type CSSProperties, type PointerEvent, useCallback, useRef } from 'react';
 
-import { createDockStore, useDock, useDockSetter } from './dockStore';
+import { DOCK_HANDLE_WIDTH, dockStore, useDock, useDockSetter } from './dockStore';
 import LogStream from './LogStream';
 
 const MIN_WIDTH = 260;
 const MAX_WIDTH = 560;
-const HANDLE_WIDTH = 36;
 
 // Full-height, right-docked, collapsible AND resizable. Open/width live in a `persistMiddleware` store, so the panel
 // comes back exactly as you left it after a refresh. Drag the grip to resize; the toggle slides the panel off-screen
@@ -28,7 +27,7 @@ const DockPanel = () => {
         return;
       }
 
-      const next = window.innerWidth - e.clientX - HANDLE_WIDTH;
+      const next = window.innerWidth - e.clientX - DOCK_HANDLE_WIDTH;
       set('width', Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, next)));
     },
     [set]
@@ -51,7 +50,7 @@ const DockPanel = () => {
           type="button"
           onClick={() => set('open', !open)}
           aria-label={open ? 'Collapse log panel' : 'Expand log panel'}
-          className="border-ink-700/70 bg-ink-900/80 hover:text-white flex w-9 flex-col items-center justify-center gap-2 self-center rounded-l-2xl border border-r-0 py-4 text-zinc-400 backdrop-blur-md transition"
+          className="border-ink-700/70 bg-ink-900/80 flex w-9 flex-col items-center justify-center gap-2 self-center rounded-l-2xl border border-r-0 py-4 text-zinc-400 backdrop-blur-md transition hover:text-white"
         >
           <span className="text-xs">{open ? '›' : '‹'}</span>
           <span className="text-[10px] font-semibold tracking-[0.18em] text-zinc-500 [writing-mode:vertical-rl]">
@@ -75,14 +74,10 @@ const DockPanel = () => {
   );
 };
 
-const LogDock = () => {
-  const [store] = useState(createDockStore);
-
-  return (
-    <StoreProvider store={store}>
-      <DockPanel />
-    </StoreProvider>
-  );
-};
+const LogDock = () => (
+  <StoreProvider store={dockStore}>
+    <DockPanel />
+  </StoreProvider>
+);
 
 export default LogDock;
