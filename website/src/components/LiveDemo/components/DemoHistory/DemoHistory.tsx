@@ -41,7 +41,8 @@ const DemoHistory = () => {
         </button>
       </div>
 
-      <div className="mt-3 basis-0 grow flex flex-col space-y-0.5 overflow-y-auto rounded-lg border border-ink-700 bg-ink-950 p-1.5">
+      {/* Same floor as the state panel: stacked in one column there is no row height for `grow basis-0` to claim. */}
+      <div className="mt-3 flex min-h-48 basis-0 grow flex-col space-y-0.5 overflow-y-auto rounded-lg border border-ink-700 bg-ink-950 p-1.5">
         {ordered.map(({ entry, originalIndex }) => (
           <DemoHistoryEntry
             key={originalIndex}

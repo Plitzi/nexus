@@ -7,11 +7,12 @@ import useReveal from '../../useReveal';
 const VerbCard = ({ verb, index }: { verb: CoreVerb; index: number }) => {
   const { ref, visible } = useReveal<HTMLDivElement>();
 
+  // `min-w-0` lets the code sample scroll on its own instead of widening the grid track past a narrow viewport.
   return (
     <div
       ref={ref}
       style={{ '--reveal-delay': `${index * 90}ms` } as CSSProperties}
-      className={`reveal card border-ink-700 bg-ink-900/60 flex flex-col rounded-2xl border p-6 ${visible ? 'is-visible' : ''}`}
+      className={`reveal card border-ink-700 bg-ink-900/60 flex min-w-0 flex-col rounded-2xl border p-6 ${visible ? 'is-visible' : ''}`}
     >
       <div className="flex items-baseline gap-2">
         <span className="text-gradient font-mono text-2xl font-bold">{verb.verb}</span>

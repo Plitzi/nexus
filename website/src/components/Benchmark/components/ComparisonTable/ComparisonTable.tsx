@@ -1,12 +1,16 @@
 import { COMPARISON_COLUMNS, COMPARISON_ROWS } from '../../../../content';
 import ComparisonCell from '../ComparisonCell';
 
+// Eight columns never fit a phone: the table keeps its natural column widths (`min-w`) and the wrapper scrolls, rather
+// than squeezing every label into two-letter columns.
 const ComparisonTable = () => (
   <div className="overflow-x-auto rounded-2xl border border-ink-700 bg-ink-900/50">
-    <table className="w-full border-collapse text-sm">
+    <table className="w-full min-w-176 border-collapse text-sm">
       <thead>
         <tr className="border-b border-ink-700">
-          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">Feature</th>
+          <th className="min-w-44 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            Feature
+          </th>
           {COMPARISON_COLUMNS.map((column, index) => (
             <th
               key={column}

@@ -38,7 +38,7 @@ const StatCell = ({ label, statKey }: { label: string; statKey: keyof GameStats 
 };
 
 const Scoreboard = ({ stats }: { stats: StatConfig[] }) => (
-  <div className="border-ink-700/70 bg-ink-900/60 pointer-events-auto flex items-center gap-7 rounded-full border px-6 py-2.5 backdrop-blur-md">
+  <div className="border-ink-700/70 bg-ink-900/60 pointer-events-auto flex max-w-full items-center gap-4 rounded-full border px-4 py-2.5 backdrop-blur-md sm:gap-7 sm:px-6">
     {stats.map(stat => (
       <StatCell key={stat.key} label={stat.label} statKey={stat.key} />
     ))}

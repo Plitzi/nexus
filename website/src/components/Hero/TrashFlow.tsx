@@ -113,7 +113,7 @@ const LevelTower = ({ panelRef }: { panelRef: RefObject<HTMLDivElement | null> }
   return (
     <div
       ref={panelRef}
-      className="bg-ink-950/75 pointer-events-none absolute top-14 right-4 flex flex-col items-center gap-2.5 rounded-2xl border-2 px-4 py-4 backdrop-blur-md transition-opacity duration-200"
+      className="bg-ink-950/75 pointer-events-none absolute top-14 right-2 flex flex-col items-center gap-2.5 rounded-2xl border-2 px-3 py-3 backdrop-blur-md transition-opacity duration-200 sm:right-4 sm:px-4 sm:py-4"
       style={{ borderColor: `${tint}88`, boxShadow: `0 0 28px ${tint}44, inset 0 0 18px ${tint}22` }}
     >
       <span
@@ -133,7 +133,7 @@ const LevelTower = ({ panelRef }: { panelRef: RefObject<HTMLDivElement | null> }
         {LEVEL_COLORS.map((color, i) => (
           <span
             key={i}
-            className="h-4 w-11 transition-all"
+            className="h-3 w-8 transition-all sm:h-4 sm:w-11"
             style={{
               clipPath: HEX_CLIP,
               backgroundColor: i < filled ? color : 'rgba(255,255,255,0.06)',
@@ -159,7 +159,7 @@ const BatteryBar = ({ panelRef }: { panelRef: RefObject<HTMLDivElement | null> }
   return (
     <div
       ref={panelRef}
-      className={`bg-ink-950/80 pointer-events-none absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 rounded-2xl border-2 px-6 py-4 backdrop-blur-md transition-opacity duration-200 ${
+      className={`bg-ink-950/80 pointer-events-none absolute bottom-6 left-1/2 flex max-w-[calc(100%-1rem)] -translate-x-1/2 flex-col items-center gap-2 rounded-2xl border-2 px-3 py-3 backdrop-blur-md transition-opacity duration-200 sm:px-6 sm:py-4 ${
         critical ? 'attention' : ''
       }`}
       style={{ borderColor: `${color}99`, boxShadow: `0 0 30px ${color}55, inset 0 2px 12px rgba(0,0,0,0.6)` }}
@@ -176,11 +176,12 @@ const BatteryBar = ({ panelRef }: { panelRef: RefObject<HTMLDivElement | null> }
           {pct}%
         </span>
       </div>
-      <div className="flex gap-1">
+      {/* 24 segments at their desktop size are wider than a phone, so they thin out rather than bleed off the field. */}
+      <div className="flex gap-0.5 sm:gap-1">
         {Array.from({ length: segments }, (_, i) => (
           <span
             key={i}
-            className="h-7 w-2.5 rounded-sm transition-colors"
+            className="h-5 w-1.5 rounded-sm transition-colors sm:h-7 sm:w-2.5"
             style={
               i < filled
                 ? { backgroundColor: color, boxShadow: `0 0 9px ${color}` }

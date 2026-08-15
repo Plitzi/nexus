@@ -32,6 +32,10 @@ type GameBase = {
   powerups?: PowerInfo[];
   // Self-contained games (their own store) opt out of the shared top scoreboard.
   hideScoreboard?: boolean;
+  // A game that draws into the space it is handed rather than sizing itself. Canvas engines always do; a `Component`
+  // says so here. Where the arcade lays itself out top-down (below xl) these are the only games given a fixed
+  // playfield height — the rest would only get dead space or a clipped board.
+  fillsPlayfield?: boolean;
 };
 
 export type GameDef = GameBase & ({ engine: CanvasEngine } | { Component: ComponentType });
@@ -150,6 +154,7 @@ export const GAMES: GameDef[] = [
     icon: '🧹',
     tagline: 'Vacuum a huge confetti map',
     hideScoreboard: true,
+    fillsPlayfield: true,
     stats: []
   },
   {

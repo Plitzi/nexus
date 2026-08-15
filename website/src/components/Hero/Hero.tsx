@@ -19,27 +19,31 @@ const Hero = () => {
   }, []);
 
   return (
-    <section id="top" className="bg-noise relative flex min-h-[94vh] w-full items-center overflow-hidden">
+    <section
+      id="top"
+      className="bg-noise relative flex w-full flex-col overflow-hidden xl:min-h-[94vh] xl:flex-row xl:items-center"
+    >
       <div className="hero-wash pointer-events-none absolute inset-0" />
 
-      {/* The arcade is one self-contained, movable component. Here it sits in the right column, shifted off the edge so
-          it reads as a centered, framed playfield; drop it into any sized container and it fills it. */}
-      <div className="absolute top-0 right-0 bottom-0 w-full lg:right-12 lg:w-[52%]">
+      {/* The arcade is one self-contained, movable component. Up to xl it stacks under the copy as a normal block that
+          sizes itself; from xl — the first width where a 36rem column of copy and a half-width playfield both fit — it
+          moves into the right column, shifted off the edge so it reads as a centered, framed playfield. */}
+      <div className="relative order-2 mx-auto w-full max-w-400 pb-12 xl:absolute xl:inset-y-0 xl:right-12 xl:order-0 xl:mx-0 xl:w-[52%] xl:max-w-none xl:pb-0">
         <Arcade />
       </div>
 
-      <div className="from-ink-950 pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-linear-to-t to-transparent" />
+      <div className="from-ink-950 pointer-events-none absolute inset-x-0 bottom-0 hidden h-24 bg-linear-to-t to-transparent xl:block" />
 
       <LogDock />
 
-      <div className="pointer-events-none relative z-10 mx-auto w-full max-w-400 px-6 py-28 lg:px-12">
+      <div className="pointer-events-none relative z-10 order-1 mx-auto w-full max-w-400 px-6 pt-20 pb-10 xl:order-0 xl:px-12 xl:py-28">
         <div className="max-w-xl">
           <div className="border-ink-700 bg-ink-900/70 pointer-events-auto inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium text-zinc-300 backdrop-blur">
             <span className="live-dot bg-brand-400 h-1.5 w-1.5 rounded-full" />
             Next-generation state management
           </div>
 
-          <h1 className="mt-6 text-5xl leading-[0.95] font-extrabold tracking-tight text-white sm:text-6xl xl:text-7xl">
+          <h1 className="mt-6 text-4xl leading-[0.95] font-extrabold tracking-tight text-white sm:text-6xl xl:text-7xl">
             Give your state
             <br />
             <span className="text-gradient">an address.</span>

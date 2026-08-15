@@ -16,7 +16,9 @@ const ArcadeMenu = ({ games, onPlay, onPurge }: ArcadeMenuProps) => (
     </div>
     <p className="mb-6 text-center text-sm text-zinc-500">Pick a cabinet — every game runs on one Nexus store</p>
 
-    <div className="grid w-full max-w-2xl grid-cols-2 gap-3 sm:grid-cols-3">
+    {/* Stacked under the hero copy the cabinets share its gutters, so both blocks line up on the same edges; in the
+        narrow right-hand column at xl the grid keeps its own cap. */}
+    <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 xl:max-w-2xl">
       {games.map(game => (
         <button
           key={game.id}

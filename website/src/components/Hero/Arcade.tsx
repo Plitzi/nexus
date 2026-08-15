@@ -112,14 +112,22 @@ const Arcade = () => {
 
   // Canvas games run through the shared GameCanvas host; self-contained games render their own component. Keyed by id so
   // switching cabinets remounts the engine.
-  const gameNode =
-    'engine' in active ? <GameCanvas key={gameId} engine={active.engine} /> : <active.Component key={gameId} />;
+  const isCanvasGame = 'engine' in active;
+  const gameNode = isCanvasGame ? <GameCanvas key={gameId} engine={active.engine} /> : <active.Component key={gameId} />;
+  const needsPlayfieldHeight = isCanvasGame || active.fillsPlayfield === true;
+
+  // Below xl the arcade has no box to fill: it lays itself out top-down, and only a canvas engine — which draws into
+  // whatever height it is given — needs one pinned. Self-contained games and the cabinet menu size themselves, so a
+  // narrow screen gets no clipped board and no dead space. From xl the playfield fills its container and the strip is
+  // pinned to the bottom, as designed.
+  const playfieldClass = playing
+    ? `relative pt-14 xl:absolute xl:inset-x-0 xl:top-0 xl:bottom-24 xl:pt-0 ${needsPlayfieldHeight ? 'h-104 sm:h-120' : ''}`
+    : 'relative xl:absolute xl:inset-0';
 
   return (
     <StoreProvider value={HERO_INITIAL} middlewares={HERO_MIDDLEWARES}>
-      <div ref={rootRef} className="relative h-full w-full">
-        {/* Playfield, stopping short of the bottom so the switcher + toggles sit in a clear strip below it. */}
-        <div className="absolute inset-x-0 top-0 bottom-24">
+      <div ref={rootRef} className="relative flex w-full flex-col xl:block xl:h-full">
+        <div className={playfieldClass}>
           {playing ? gameNode : <ArcadeMenu games={GAMES} onPlay={handlePlay} onPurge={purgeData} />}
           {/* Subtle side rails marking where the play area ends. */}
           <span className="via-brand-500/25 pointer-events-none absolute inset-y-10 left-0 w-px bg-linear-to-b from-transparent to-transparent" />
@@ -139,9 +147,10 @@ const Arcade = () => {
           )}
         </div>
 
-        {/* Power-up legend, pinned to the top-left for games that drop them. */}
+        {/* Power-up legend, pinned to the top-left for games that drop them. A narrow playfield has no room beside the
+            scoreboard, so there it drops below it instead of underneath it. */}
         {playing && active.powerups && (
-          <div className="pointer-events-none absolute inset-x-0 top-16 z-10 flex justify-start px-4">
+          <div className="pointer-events-none absolute inset-x-0 top-32 z-10 flex justify-start px-4 md:top-16">
             <PowerLegend powerups={active.powerups} />
           </div>
         )}
@@ -178,9 +187,9 @@ const Arcade = () => {
 
         {/* Game switcher + the feature each game showcases + toggles, in the clear strip below the play area. */}
         {playing && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex flex-col items-center gap-3">
+          <div className="pointer-events-none z-10 mt-4 flex flex-col items-center gap-3 xl:absolute xl:inset-x-0 xl:bottom-4 xl:mt-0">
             <GameSwitcher games={GAMES} active={gameId} onSelect={handleSelect} />
-            <div className="pointer-events-auto flex items-center gap-2">
+            <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-2 px-4">
               <p className="mr-1 font-mono text-[11px] text-zinc-500">
                 showcasing <span className="text-brand-300">{active.feature}</span>
               </p>
