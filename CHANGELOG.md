@@ -1,5 +1,39 @@
 # @plitzi/nexus
 
+## 1.1.1
+
+### Fixed
+
+- **Nexus believed it was in production inside every browser bundle.** `resolveMode` read the environment as
+  `typeof process !== 'undefined' && process.env.NODE_ENV`. A bundler statically replaces the exact text
+  `process.env.NODE_ENV` with a string literal — but only that text, and the guard in front of it is still
+  evaluated at runtime. In a browser there is no `process`, so the guard short-circuits and the literal the
+  bundler just injected is never read: `MODE` fell through to `'production'`, and `isDev` was `false`, no matter
+  what the consumer defined. Node, `tsx` and SSR were unaffected, which is what kept it hidden.
+
+  The replaceable expression now comes first and the guard is a `catch`, which is the only form that works in all
+  four cases: bundled with a define, bundled without one, plain Node, and a browser with no build step.
+
+  Everything gated on `isDev` was silently inert in the browser. All of it is live again:
+
+  - **The dev-store registry.** `StoreProvider` never called `registerDevStore`, so a devtools panel could not
+    enumerate a single store — its store inspector and instance dropdown came up empty, while the tabs that do
+    not depend on the registry carried on working and made it look deliberate.
+  - **Read-only path enforcement.** A write to a `readOnly` path is meant to throw in development and no-op in
+    production. It only ever no-opped: the write vanished and nothing said so.
+  - **Sibling scope-collision detection.** `scopeClaims` was never attached, so two sibling scopes delegating a
+    write to the same unowned parent path went unreported.
+  - **The duplicate `StoreProvider id` warning**, which exists precisely because a shadowed id makes
+    `useStoreById` resolve to the nearer store without complaint.
+
+### Notes
+
+- No API change, and no behaviour change outside the browser. A consumer still has to define
+  `process.env.NODE_ENV` for its bundle — that has always been the contract; it just could not be honoured
+  before. A browser bundle with no define at all still resolves to `production`, which is the safe default.
+- Covered by `src/env.test.ts`: the mode is read from the environment rather than assumed, and the fallback holds
+  where there is genuinely no `process` and nothing replaced it.
+
 ## 1.1.0
 
 ### Added
