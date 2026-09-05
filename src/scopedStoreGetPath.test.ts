@@ -249,6 +249,30 @@ describe('scoped store: dev-only sibling collision detection', () => {
     child.setState('a', 3);
   });
 
+  it('releases the claims of a destroyed scope so its replacement can delegate the same path', () => {
+    const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
+    const first = createStore<S>({}, { parent });
+
+    first.setState('a', 10);
+    first.destroy?.();
+
+    const replacement = createStore<S>({}, { parent });
+
+    expect(() => replacement.setState('a', 20)).not.toThrow();
+  });
+
+  it('still throws when a live sibling delegates a path a destroyed sibling never claimed', () => {
+    const parent = createStore<S>({ a: 1, nested: { x: 1, y: 2 } });
+    const first = createStore<S>({}, { parent });
+    const second = createStore<S>({}, { parent });
+    const third = createStore<S>({}, { parent });
+
+    first.setState('a', 10);
+    second.destroy?.();
+
+    expect(() => third.setState('a', 30)).toThrow('scope collision');
+  });
+
   it('does not throw when siblings declare the same key but never delegate (the List pattern)', () => {
     const parent = createStore<S>({ nested: { x: 1, y: 2 } });
     const first = createStore<S>({ a: 1 }, { parent });

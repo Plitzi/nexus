@@ -9,6 +9,7 @@ import { isTest } from '../../env';
 
 export type ScopeClaims = {
   claimDelegatedWrite: (path: string, scopeId: number) => void;
+  releaseScope: (scopeId: number) => void;
 };
 
 const collisionMessage = (path: string) =>
@@ -17,14 +18,21 @@ const collisionMessage = (path: string) =>
   'shared value into the parent and update it there.';
 
 // A registry held by a parent scope: each child registers the unowned paths it delegates up, tagged with its scope
-// id, so a second child delegating the same path can be flagged.
+// id, so a second child delegating the same path can be flagged. The reverse index exists for `releaseScope`: a
+// claim outlives its claimant otherwise, and the *replacement* scope of a remount (a modal reopened, a page
+// navigated back to) would be reported as colliding with the dead one it succeeds.
 export const createScopeClaims = (): ScopeClaims => {
   const writers = new Map<string, number>();
+  const claimedByScope = new Map<number, Set<string>>();
 
   return {
     claimDelegatedWrite(path, scopeId) {
       const existing = writers.get(path);
-      if (existing !== undefined && existing !== scopeId) {
+      if (existing !== undefined) {
+        if (existing === scopeId) {
+          return;
+        }
+
         if (isTest) {
           throw new Error(collisionMessage(path));
         }
@@ -35,6 +43,27 @@ export const createScopeClaims = (): ScopeClaims => {
       }
 
       writers.set(path, scopeId);
+      const claimed = claimedByScope.get(scopeId);
+      if (claimed) {
+        claimed.add(path);
+
+        return;
+      }
+
+      claimedByScope.set(scopeId, new Set([path]));
+    },
+
+    releaseScope(scopeId) {
+      const claimed = claimedByScope.get(scopeId);
+      if (!claimed) {
+        return;
+      }
+
+      for (const path of claimed) {
+        writers.delete(path);
+      }
+
+      claimedByScope.delete(scopeId);
     }
   };
 };

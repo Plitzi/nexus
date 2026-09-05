@@ -254,6 +254,12 @@ function createStore<TState extends object>(
     changeListeners.clear();
     invalidateListeners.clear();
     invalidateUnsub?.();
+    // A claim must not outlive its claimant: the scope that replaces this one on a remount (a modal reopened, a page
+    // navigated back to) delegates the same paths under a new scope id, and would be flagged as colliding with the
+    // dead scope it succeeds.
+    if (isDev && parent) {
+      (parent as WithScopeClaims).scopeClaims?.releaseScope(scopeId);
+    }
   };
 
   const withBase = (basePath: string): any => {

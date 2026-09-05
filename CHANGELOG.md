@@ -1,5 +1,30 @@
 # @plitzi/nexus
 
+## 1.1.2
+
+### Fixed
+
+- **The sibling scope-collision guard reported collisions that were over.** A scope registers the unowned paths it
+  delegates to its parent, tagged with its scope id, so a second child delegating the same path can be flagged —
+  but `destroy()` never released those registrations. A claim therefore outlived its claimant, and the scope that
+  REPLACES one on a remount is a new store with a new id: a modal closed and reopened, a page navigated away from
+  and back to, a keyed subtree remounted. The replacement delegated the same path, found the dead scope's claim
+  still standing, and warned about a collision with a scope that no longer existed.
+
+  In a React tree this reads as a real bug that cannot be found, because the second writer is not on screen. The
+  report that surfaced it was one element's state (`runtime.elements.<id>`, written from a modal's scope) named as
+  clobbered by a sibling, in a document where that element exists exactly once.
+
+  `createScopeClaims` now keeps a reverse index of what each scope claimed, and `destroy()` releases it. StrictMode
+  is unaffected either way — it reuses the same store instance through `destroy()` → `reconnect()`, so its scope id
+  never changed. Two live siblings delegating the same path are still reported, unchanged.
+
+### Notes
+
+- Dev-only, both before and after: the whole guard is compiled out of production builds. No API change.
+- Covered by `src/scopedStoreGetPath.test.ts`: a destroyed scope's replacement may delegate the path it held, and a
+  live sibling is still caught when a different sibling was the one destroyed.
+
 ## 1.1.1
 
 ### Fixed
