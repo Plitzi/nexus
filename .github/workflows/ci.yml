@@ -180,12 +180,38 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
+      # No `registry-url` here, deliberately: the .npmrc setup-node writes for it still carries `always-auth`, which
+      # npm 11 warns about on every command and drops in the next major. The four lines below are the same file
+      # without the deprecated key — and being written here rather than generated is what lets the check after it
+      # say something useful when the token is the problem.
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: ${{ matrix.registry.url }}
-          scope: ${{ matrix.registry.scope }}
           cache: 'yarn'
+
+      - name: Authenticate with ${{ matrix.registry.name }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets[matrix.registry.token] }}
+          REGISTRY: ${{ matrix.registry.url }}
+          SCOPE: ${{ matrix.registry.scope }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "::error::Secret ${{ matrix.registry.token }} is empty — an anonymous publish is what the registry answers as '404 Not Found - PUT'."
+            exit 1
+          fi
+          host="${REGISTRY#https://}"
+          {
+            echo "${SCOPE}:registry=${REGISTRY}"
+            echo "//${host}:_authToken=\${NODE_AUTH_TOKEN}"
+          } > "$HOME/.npmrc"
+
+      # A publish this token cannot make is a 404 on the PUT — the registry does not distinguish "no such package"
+      # from "not yours", so the error names neither the token nor the account. This asks the question directly, and
+      # the log then says whose token it is or that it is no longer valid.
+      - name: Check the token is still valid
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets[matrix.registry.token] }}
+        run: npm whoami --registry ${{ matrix.registry.url }}
 
       - name: Restore Cache node_modules
         id: cache-packages
@@ -209,10 +235,18 @@ jobs:
         if: steps.cache-packages.outputs.cache-hit != 'true' || steps.cache-build.outputs.cache-hit != 'true'
         run: exit 1
 
-      - name: Yarn Token
+      # The tag is what a release is named after and the manifest is what the registry stores. When they disagree the
+      # publish either fails on a version that already exists or ships one nobody tagged, and both read as something
+      # else entirely. `yarn config set` used to run here to write the same credentials in Yarn's format; nothing in
+      # this job is Yarn, and it left the token in a file in the checkout.
+      - name: Check the tag matches the manifest
         run: |
-          yarn config set 'npmRegistryServer' "${{ matrix.registry.url }}"
-          yarn config set 'npmAuthToken' "${{ secrets[matrix.registry.token] }}"
+          tagged="${GITHUB_REF_NAME#v}"
+          packaged="$(node -p "require('./package.json').version")"
+          if [ "$tagged" != "$packaged" ]; then
+            echo "::error::Release tag $GITHUB_REF_NAME does not match package.json ($packaged). Nothing published."
+            exit 1
+          fi
 
       - name: Publish package
         run: npm publish --access public

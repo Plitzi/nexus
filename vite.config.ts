@@ -7,7 +7,9 @@ import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 import { defineConfig } from 'vitest/config';
 
-function getEntries(root = path.resolve(__dirname, 'src')) {
+// `import.meta.dirname` rather than `__dirname`: this file is ESM, and Vite's native config loader — already the
+// default in a coming major — does not define the CommonJS globals it used to shim in.
+function getEntries(root = path.resolve(import.meta.dirname, 'src')) {
   const pattern = /index\.(ts|tsx|js|mjs)$/;
   const entries: Record<string, string> = {};
 
