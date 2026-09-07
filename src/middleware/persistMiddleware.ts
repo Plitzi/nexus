@@ -150,8 +150,24 @@ function hydrate<TState extends object>(
 
   try {
     const envelope = JSON.parse(raw) as Envelope;
-    const persisted =
-      envelope.version !== version && migrate ? migrate(envelope.state, envelope.version) : envelope.state;
+
+    /**
+     * A version the caller did not write, and no way to read it: leave it alone and start from the initial state.
+     *
+     * `version` exists to say "the shape changed". Applying a payload written under a shape this build does not
+     * understand is the one thing the option cannot be for — and it fails silently, because the values still LAND:
+     * a list of strings restored into a build that now stores records renders a row per entry with nothing in it,
+     * and every control on those rows addresses a field that is not there.
+     *
+     * Not removed, deliberately. The payload is readable, just not by this build — a later one that ships a
+     * `migrate` can still make sense of it, and the next commit overwrites it with the current version anyway.
+     */
+    const stale = envelope.version !== version;
+    if (stale && !migrate) {
+      return;
+    }
+
+    const persisted = stale && migrate ? migrate(envelope.state, envelope.version) : envelope.state;
 
     if (paths) {
       const fragment = persisted as Record<string, unknown>;

@@ -1,5 +1,23 @@
 # @plitzi/nexus
 
+## 1.1.3
+
+### Fixed
+
+- **`persistMiddleware` restored state written under a version it could not read.** `version` exists to say "the
+  shape changed", and the option pairs with `migrate` for turning an old shape into the current one. Without a
+  `migrate`, a mismatch fell through to applying the stored payload anyway — which is the one thing the option
+  cannot be for.
+
+  It fails silently, because the values still LAND. A list persisted as strings, restored into a build that now
+  stores `{ id, value }` records, renders a row per entry with nothing in it: every label reads `.value` and finds
+  nothing, and every control addresses `.id` and does nothing. Nothing throws, nothing is logged, and the page is
+  simply inert — which is a long way from the stored data being the suspect.
+
+  A mismatch with no `migrate` now leaves the store on its initial state. The payload is left where it is rather
+  than deleted: it is readable, just not by this build, so a later one that ships a `migrate` can still make sense
+  of it — and the next commit overwrites it with the current version regardless.
+
 ## 1.1.2
 
 ### Fixed

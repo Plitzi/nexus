@@ -60,12 +60,44 @@ describe('persist middleware — edge cases', () => {
     expect(store.getState().count).toBe(101);
   });
 
-  it('uses the stored payload as-is on a version mismatch without migrate', () => {
+  /**
+   * `version` exists to say "the shape changed", so applying a payload written under a shape this build does not
+   * understand is the one thing it cannot be for. It used to apply it anyway, and the failure is silent because the
+   * values still LAND: a list of strings restored into a build that now stores records renders a row per entry with
+   * nothing in it, and every control on those rows addresses a field that is not there.
+   */
+  it('ignores a stored payload from a version it cannot read', () => {
     const { storage, data } = memoryStorage();
     seed(data, 'app', { version: 5, state: { count: 7 } });
 
     const store = createStore<State>(initial(), {
       middlewares: [persistMiddleware<State>({ key: 'app', storage, version: 1 })]
+    });
+
+    expect(store.getState()).toEqual(initial());
+  });
+
+  /**
+   * Ignored, not deleted. The payload is readable — just not by this build — so a later one that ships a `migrate`
+   * can still make sense of it, and the next commit overwrites it with the current version regardless.
+   */
+  it('leaves the unreadable payload where it is', () => {
+    const { storage, data } = memoryStorage();
+    seed(data, 'app', { version: 5, state: { count: 7 } });
+
+    createStore<State>(initial(), {
+      middlewares: [persistMiddleware<State>({ key: 'app', storage, version: 1 })]
+    });
+
+    expect(JSON.parse(data.get('app') ?? 'null')).toEqual({ version: 5, state: { count: 7 } });
+  });
+
+  it('still restores a payload whose version matches', () => {
+    const { storage, data } = memoryStorage();
+    seed(data, 'app', { version: 3, state: { count: 7 } });
+
+    const store = createStore<State>(initial(), {
+      middlewares: [persistMiddleware<State>({ key: 'app', storage, version: 3 })]
     });
 
     expect(store.getState().count).toBe(7);
