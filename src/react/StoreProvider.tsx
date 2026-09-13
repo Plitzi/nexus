@@ -52,7 +52,7 @@ export type StoreProviderProps<TState extends object = any> = {
   // then reads it (without it, the hook returns an empty, no-op view).
   middlewares?: StoreMiddleware<TState>[];
   // A human label of where this store comes from (e.g. `"Form:hero"`), shown by the devtools store picker. Purely
-  // cosmetic — unlike `id` it carries no addressing semantics and never collides. Stripped from production.
+  // cosmetic — unlike `id` it carries no addressing semantics and never collides.
   name?: string;
   children?: ReactNode;
 };
@@ -161,11 +161,12 @@ const StoreProvider = <TState extends object = any>({
     };
   }, [liveChain, store]);
 
-  // Expose this store to the dev-only global registry so a devtools panel mounted above the scoped stores can still
-  // enumerate them (React context can't reach downward), tagged with the ambient `DevStoreScopeContext` so the panel
-  // can group stores by origin. Dev-only, so production carries no registry bookkeeping.
+  // Expose this store to the global registry so a devtools panel mounted above the scoped stores can still enumerate
+  // them (React context can't reach downward), tagged with the ambient `DevStoreScopeContext` so the panel can group
+  // stores by origin. Gating on `isDev` alone left a panel that ships in a production bundle with nothing to list, and
+  // nothing erroring: the scope context is that panel saying it is there, so it registers in any build.
   useEffect(() => {
-    if (!isDev) {
+    if (!isDev && devScopeId === undefined) {
       return;
     }
 

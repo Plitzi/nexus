@@ -16,20 +16,22 @@ export type DevStoreEntry = {
   name?: string;
 };
 
-// A process-wide registry of live stores, populated by `StoreProvider` in dev only. It exists so a devtools panel
-// mounted ABOVE the scoped/element stores in the tree (where React context can't reach them) can still enumerate every
-// store instance and inspect its state. Kept out of the hot path: registration happens once per store mount/unmount.
+// A process-wide registry of live stores, populated by `StoreProvider` in dev builds and, in any build, beneath a
+// `DevStoreScopeContext`. It exists so a devtools panel mounted ABOVE the scoped/element stores in the tree (where
+// React context can't reach them) can still enumerate every store instance and inspect its state. Kept out of the hot
+// path: registration happens once per store mount/unmount.
 
 const entries = new Map<DevStore, DevStoreEntry>();
 const listeners = new Set<() => void>();
 let uidSeq = 0;
 
-// A frozen array snapshot so `useSyncExternalStore` sees a stable reference between mutations (identity only changes
-// when a store is added or removed, never on every render).
-let snapshot: ReadonlyArray<DevStoreEntry> = [];
+// A stable array so `useSyncExternalStore` sees one reference between mutations (identity only changes when a store is
+// added or removed, never on every render). Rebuilt on read rather than on every mutation: a page mounting N stores
+// would otherwise copy the registry N times, and that page can be a shipped build with the devtools switched on.
+let snapshot: ReadonlyArray<DevStoreEntry> | undefined;
 
 const emit = () => {
-  snapshot = [...entries.values()];
+  snapshot = undefined;
   for (const listener of listeners) {
     listener();
   }
@@ -59,4 +61,8 @@ export const subscribeDevStores = (listener: () => void): (() => void) => {
   };
 };
 
-export const getDevStoresSnapshot = (): ReadonlyArray<DevStoreEntry> => snapshot;
+export const getDevStoresSnapshot = (): ReadonlyArray<DevStoreEntry> => {
+  snapshot ??= [...entries.values()];
+
+  return snapshot;
+};

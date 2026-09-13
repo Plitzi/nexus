@@ -778,9 +778,9 @@ function HistoryPanel() {
 
 ## DevTools integration
 
-A **dev-only** global registry lets a devtools panel enumerate and inspect every store — including scoped stores mounted **below** the panel, where React context can't reach them. Everything here is stripped from production builds (guarded by `isDev`), so it carries no runtime cost when shipped.
+A global registry lets a devtools panel enumerate and inspect every store — including scoped stores mounted **below** the panel, where React context can't reach them.
 
-Every `StoreProvider` registers its store on mount and removes it on unmount. Read the registry with `useSyncExternalStore`:
+In a dev build every `StoreProvider` registers its store on mount and removes it on unmount. In a production build only the providers beneath a `DevStoreScopeContext` do — so a panel that ships with the app (switched on per session, for instance) mounts that context and sees its stores, and an app that never mounts it carries no registry bookkeeping. Read the registry with `useSyncExternalStore`:
 
 ```ts
 import { subscribeDevStores, getDevStoresSnapshot } from '@plitzi/nexus';
@@ -798,7 +798,7 @@ Each `DevStoreEntry` is `{ uid, store, scopeId?, name? }`:
 - **`name`** — the `<StoreProvider name>` label, e.g. `"Form:hero"` — a human hint of where the store comes from.
 - **`scopeId`** — an app-defined grouping tag (see `DevStoreScopeContext` below), e.g. the app/SDK instance the store belongs to, so a panel can group stores by origin.
 
-**`DevStoreScopeContext`** tags every store registered beneath it with a `scopeId`. Wrap a subtree to attribute its stores to one origin (a panel then groups by it):
+**`DevStoreScopeContext`** tags every store registered beneath it with a `scopeId`, and turns registration on for that subtree in any build. Wrap a subtree to attribute its stores to one origin (a panel then groups by it) — and mount it only while the panel is enabled:
 
 ```tsx
 import { DevStoreScopeContext } from '@plitzi/nexus/react';

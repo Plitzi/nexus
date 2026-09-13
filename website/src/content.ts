@@ -191,7 +191,7 @@ export const FEATURES: Feature[] = [
     group: 'Tooling',
     title: 'DevTools introspection',
     description:
-      'A dev-only registry lets a panel enumerate and inspect every store — even scoped ones mounted below it. Name a provider, group stores by origin with DevStoreScopeContext, and read each scope’s own layer with getOwnState(). Stripped from production.'
+      'A registry lets a panel enumerate and inspect every store — even scoped ones mounted below it. Name a provider, group stores by origin with DevStoreScopeContext, and read each scope’s own layer with getOwnState(). On in dev; in production, only beneath a panel that mounts DevStoreScopeContext.'
   }
 ];
 
@@ -751,8 +751,9 @@ export function Dashboard() {
 import { subscribeDevStores, getDevStoresSnapshot } from '@plitzi/nexus';
 import type { DevStoreEntry } from '@plitzi/nexus';
 
-// A dev-only registry: every StoreProvider registers itself, so a
-// panel can enumerate stores it never rendered — even scoped ones.
+// A registry: every StoreProvider registers itself (in production, only
+// beneath DevStoreScopeContext), so a panel can enumerate stores it never
+// rendered — even scoped ones.
 
 // 1. Name providers and tag a subtree with an origin (scopeId):
 <DevStoreScopeContext value={instanceId}>

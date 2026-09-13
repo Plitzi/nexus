@@ -1,5 +1,23 @@
 # @plitzi/nexus
 
+## 1.1.4
+
+### Fixed
+
+- **A devtools panel in a production build listed no stores.** `StoreProvider` registered its store in the dev
+  store registry only when `isDev` was true, so in a production bundle nothing ever registered — including under a
+  panel that ships with the app and is switched on per session. The panel's store picker was simply empty: no error,
+  no warning, and an empty list is a plausible enough answer that it reads as a panel nobody finished rather than a
+  registry nobody filled.
+
+  A provider now also registers whenever it sits beneath a `DevStoreScopeContext`, in any build. Providing the
+  context is the panel saying it is mounted, so it is the opt-in: a production build that never mounts it keeps no
+  registry bookkeeping, exactly as before. Dev builds are unchanged — every provider registers.
+
+- **Registering N stores copied the registry N times.** The snapshot array was rebuilt on every register and
+  unregister, which made mounting a page of stores quadratic in the number of stores. It is now rebuilt on read, once
+  per change, and keeps the same stable identity between changes that `useSyncExternalStore` relies on.
+
 ## 1.1.3
 
 ### Fixed
