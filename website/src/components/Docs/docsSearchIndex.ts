@@ -38,7 +38,8 @@ export const DOCS_SEARCH_INDEX: DocSearchEntry[] = [
     label: 'API Reference',
     keywords: [
       'createStore', 'StoreApi', 'getState', 'getPath', 'setState', 'subscribe',
-      'subscribePath', 'subscribeChange', 'destroy', 'createStoreHook',
+      'subscribePath', 'subscribeChange', 'destroy', 'createStoreHook', 'ttl', 'isStale', 'expire',
+      'getFreshness', 'freshness', 'stale', 'watchFreshness', 'getFreshnessRecords', 'useFreshness', 'useOnStale',
       'withBase', 'BoundStore', 'base path', 'bound store', 'defaultValue',
       'useStore', 'useStoreSync', 'useStoreGetter', 'useStoreSetter',
       'useStoreById', 'storeId', 'store id', 'named store', 'by id',

@@ -1,5 +1,52 @@
 # @plitzi/nexus
 
+## 1.2.0
+
+### Added
+
+- **Freshness per path: `setState(path, value, { ttl })`, `isStale`, `getFreshness` and `expire`.** A write can now
+  say how long, in milliseconds, the value it lands counts as current. The store records when the path was written
+  and when it stops being current, and `isStale(path)` answers from that record — or from the nearest ancestor's,
+  since a record covers its subtree. `expire(path?)` pulls the record forward to now for the path, the records below
+  it and the ancestors that contain it (every record, without a path), and returns the paths it expired.
+
+  This is what a stale-while-revalidate cache is made of, and it belongs with the value: a cache that keeps its own
+  timestamps beside a store has two places that can disagree about the same answer, and neither of them is the one
+  the devtools show. Keeping the fact on the path makes "is this still good?" a question the store answers.
+
+  It is freshness, not expiry of the value. Nothing is removed and nobody is woken when a `ttl` elapses or a path is
+  expired, because a stale value is still the best one there is until a new one lands; a caller that refreshes on
+  expiry acts on the paths `expire` returns.
+
+  The rules, all covered by `src/ttl.test.ts`:
+
+  - A path never written with a `ttl` is stale — nothing ever said how long it stays current.
+  - A write replaces the subtree at its path, so the records inside it go: a `ttl` write puts its own in their place
+    — even when the value is unchanged, since an identical answer still says it is current — and any other write
+    leaves the path stale. Records above the path stay: a change inside a current value leaves it current. A
+    whole-state write drops the records of every value it replaced, `unmount` those of what it removes, and a write
+    an interceptor cancels touches nothing.
+  - The record is in place before subscribers are woken, so one reading freshness in response sees this write's.
+  - Records live in the scope that commits the write. A delegated write is recorded by its owner, and a scoped store
+    reads (`getFreshness`, `isStale`) and expires through its parent.
+
+  A store that never passes a `ttl` pays one `undefined` check per write.
+
+- **Freshness events: `watchFreshness` and `getFreshnessRecords`.** `store.watchFreshness(listener)` — or
+  `watchFreshness(path, listener)` for a path, the records below it and the ancestors covering it — hears every
+  change: `recorded` by a `ttl` write, `expired` by `expire`, `elapsed` when a `ttl` runs out and `dropped` when the
+  value a record described was replaced or removed. `elapsed` needs a clock, so the store keeps one timer, for the
+  next record to run out, and only while somebody listens. Silent (`canPropagate: false`) writes announce nothing,
+  as they wake nobody; a listener that throws goes to `onError` like any subscriber. A scoped store also hears its
+  parent. `getFreshnessRecords()` lists a scope's own records, with a snapshot that is stable between changes — what
+  a devtools panel needs.
+
+- **Hooks: `useFreshness`, `useOnStale`, and `ttl` on `useStoreSync`.** `useFreshness(path)` answers
+  `{ isStale, updatedAt, expiresAt }` and re-renders when the path is written, expired or runs out.
+  `useOnStale(path, callback)` calls back — with the latest callback — when the path is expired or its `ttl` runs out,
+  the event saying which. Both are in the `createStoreHook` bundle too. `useStoreSync(path, value, { ttl })` writes
+  every synced value with that `ttl`; the setters `useStore` returns already took it through their options.
+
 ## 1.1.4
 
 ### Fixed

@@ -5,6 +5,7 @@ import parsePath from '../../helpers/parsePath';
 import setByPath from '../../helpers/setByPath';
 import { CANCEL } from '../../types';
 
+import type FreshnessRegistry from './FreshnessRegistry';
 import type PathTrie from './PathTrie';
 import type Subscribers from './Subscribers';
 import type {
@@ -78,6 +79,9 @@ export type SetStateDeps<TState extends object> = {
   // Paths this scope refuses to mutate. A write to a read-only path — or to an ancestor/descendant of one — throws in
   // dev (surfacing the bug) and is silently dropped in production. Empty (the default) skips the check entirely.
   readOnly: ReadonlyArray<string>;
+  // Where a `ttl` write is recorded. Only the scope that commits the write records it, so a delegated write's
+  // freshness lives beside its value.
+  freshness: FreshnessRegistry;
   reportError: StoreErrorReporter<TState>;
   // Invalidate scoped descendants' cached reads after every commit. Detached scopes don't receive
   // subscriber notifications, so they rely on this invalidation channel to keep their cache correct.
@@ -105,6 +109,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     changeListeners,
     interceptors,
     readOnly,
+    freshness,
     reportError,
     invalidateDescendants,
     onDelegateToParent
@@ -161,6 +166,17 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
     }
 
     return current;
+  };
+
+  // A write replaces the subtree at `path`, so the freshness records inside it described values that are gone: a
+  // `ttl` write replaces them with its own, any other write leaves the path with none — stale, like any value nobody
+  // said how long stays current. Records above the path are kept: a change inside a current value leaves it current.
+  const stamp = (path: string, ttl: number | undefined, silent: boolean): void => {
+    if (ttl !== undefined) {
+      freshness.record(path, ttl, Date.now(), silent);
+    } else if (freshness.size > 0) {
+      freshness.drop(path, silent);
+    }
   };
 
   // Inside `batch(fn)` writes still apply immediately (reads see them), but listener wakes are buffered here and
@@ -328,6 +344,11 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       }
     }
 
+    if (freshness.size > 0) {
+      // No single replaced subtree to name here, so every record whose value this write replaced goes.
+      freshness.dropChanged(prevState, nextState, !canPropagate);
+    }
+
     setOwnState(nextState);
     if (changeListeners.length > 0) {
       emitChange(path, prevState, nextState);
@@ -359,7 +380,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       | ((prev: TState) => TState),
     options: SetStateOptions = {}
   ) => {
-    const { canPropagate = true, unmount = false, raw = false } = options;
+    const { canPropagate = true, unmount = false, raw = false, ttl } = options;
     const prevState = getOwnState();
     // A bare function is an updater; `raw` says this one is the value itself (a stored callback), so never call it.
     const isUpdater = !raw && typeof value === 'function';
@@ -384,7 +405,8 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
         parent.setState(path, value as PathValue<TState, P>, {
           canPropagate,
           unmount,
-          raw
+          raw,
+          ttl
         });
 
         return;
@@ -412,6 +434,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
           return;
         }
 
+        freshness.drop(path, !canPropagate);
         const prevSnapshot = changeListeners.length > 0 ? getOwnSnapshot() : undefined;
         deleteOwnKey(path);
         if (prevSnapshot !== undefined) {
@@ -452,6 +475,10 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
         finalValue = intercepted;
       }
 
+      // Before the unchanged check: an answer identical to the one held still says whether it is current. And before
+      // the wakes, so a subscriber reading freshness in response sees this write's.
+      stamp(path, ttl, !canPropagate);
+
       if (prevValue === finalValue) {
         return;
       }
@@ -488,6 +515,7 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
         return;
       }
 
+      freshness.drop(path, !canPropagate);
       result = deleteByPath(prevState, segments) as TState | typeof UNCHANGED;
     } else if (interceptors.length > 0) {
       // Resolve the leaf up front so interceptors see a concrete value, then write the (possibly transformed) result
@@ -504,6 +532,10 @@ export function createSetState<TState extends object>(deps: SetStateDeps<TState>
       result = writeByPath(prevState, path, segments, intercepted, false) as TState | typeof UNCHANGED;
     } else {
       result = writeByPath(prevState, path, segments, value, isUpdater) as TState | typeof UNCHANGED;
+    }
+
+    if (!unmount) {
+      stamp(path, ttl, !canPropagate);
     }
 
     if (result === UNCHANGED) {

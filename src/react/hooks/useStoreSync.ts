@@ -24,7 +24,7 @@ function useStoreSyncMulti<TState extends object>(
   values: readonly unknown[],
   options: UseStoreSyncMultiOptions<TState>
 ): void {
-  const { mode = 'sync', enabled = true, syncStrategy = 'afterRender', raw = false } = options;
+  const { mode = 'sync', enabled = true, syncStrategy = 'afterRender', raw = false, ttl } = options;
   const pathsKey = paths.map((p, i) => (typeof p === 'function' ? `fn_${i}` : p)).join('|');
 
   const mountedRef = useRef(false);
@@ -42,7 +42,7 @@ function useStoreSyncMulti<TState extends object>(
     store.batch(() => {
       paths.forEach((p, i) => {
         const resolvedPath = typeof p === 'function' ? p(store.getState()) : p;
-        store.setState(resolvedPath, values[i] as PathValue<TState, PathOf<TState>>, { canPropagate, raw });
+        store.setState(resolvedPath, values[i] as PathValue<TState, PathOf<TState>>, { canPropagate, raw, ttl });
       });
     });
   };
@@ -77,7 +77,14 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
   const isFullState = path === undefined;
   const isDynamicPath = typeof path === 'function';
   const defaultEq = isFullState ? shallowEqual : Object.is;
-  const { mode = 'sync', enabled = true, equalityFn = defaultEq, syncStrategy = 'afterRender', raw = false } = options;
+  const {
+    mode = 'sync',
+    enabled = true,
+    equalityFn = defaultEq,
+    syncStrategy = 'afterRender',
+    raw = false,
+    ttl
+  } = options;
 
   const lastSyncedRef = useRef<typeof value | undefined>(undefined);
   const mountedRef = useRef(false);
@@ -98,10 +105,11 @@ function useStoreSyncSingle<TState extends object, P extends PathOf<TState>>(
       const resolvedPath = path(store.getState());
       store.setState(resolvedPath, value as PathValue<TState, P>, {
         canPropagate,
-        raw
+        raw,
+        ttl
       });
     } else {
-      store.setState(path, value as PathValue<TState, P>, { canPropagate, raw });
+      store.setState(path, value as PathValue<TState, P>, { canPropagate, raw, ttl });
     }
   };
 

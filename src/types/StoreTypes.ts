@@ -149,7 +149,22 @@ export type Listener = (changedPath?: Path) => void;
 // `raw` writes the value verbatim: a function is STORED rather than run as an updater — the only way to keep a
 // callback (an event handler, a renderer) in state, since a bare function is otherwise indistinguishable from
 // `prev => next`.
-export type SetStateOptions = { canPropagate?: boolean; unmount?: boolean; raw?: boolean };
+// `ttl` (ms) records when the written path stops being current — see `StoreApi.isStale`. It is freshness, not
+// expiry of the value: nothing is removed or woken when it elapses.
+export type SetStateOptions = { canPropagate?: boolean; unmount?: boolean; raw?: boolean; ttl?: number };
+
+// When a path written with a `ttl` was written, and the instant it stops being current (`expire` pulls that forward).
+export type PathFreshness = { updatedAt: number; expiresAt: number };
+
+// A change of freshness: `recorded` by a `ttl` write, `expired` by `expire`, `elapsed` when its `ttl` ran out, and
+// `dropped` when the value it described was replaced or removed. Silent (`canPropagate: false`) writes emit nothing.
+export type FreshnessEvent = {
+  path: string;
+  type: 'recorded' | 'expired' | 'elapsed' | 'dropped';
+  freshness: PathFreshness | undefined;
+};
+
+export type FreshnessListener = (event: FreshnessEvent) => void;
 
 export type SetState<T> = {
   (path: undefined, value: T | ((prev: T) => T), options?: SetStateOptions): void;
@@ -247,6 +262,25 @@ export type StoreApi<T> = {
   subscribePath: <P extends PathOf<T>>(path: P, listener: Listener) => () => void;
   // Observe every committed change with its before/after snapshots. The substrate for logger, history and persist.
   subscribeChange: (listener: ChangeListener<T>) => () => void;
+  // Freshness of a path written with `{ ttl }`, from its own record or the nearest ancestor's (a record covers its
+  // subtree); a scope without one asks its parent, which is where a delegated write recorded it.
+  getFreshness: <P extends PathOf<T>>(path: P) => PathFreshness | undefined;
+  // True when the path has no freshness record, its `ttl` has elapsed, or it was expired. A path never written with a
+  // `ttl` is stale by definition: nothing ever said how long it stays current.
+  isStale: <P extends PathOf<T>>(path: P) => boolean;
+  // Marks the path stale now — its records, those below it, and the ancestors whose subtree contains it; every record
+  // without a path — and returns the paths it expired. Values are untouched and nobody is woken: a caller that
+  // refreshes on expiry acts on the returned paths. Reaches up the scope chain like a write does.
+  expire: <P extends PathOf<T>>(path?: P) => string[];
+  // Hear every change of freshness, or only those that concern `path` — its own record, the ones below it and the
+  // ancestors that cover it. A scoped store also hears its parent's. `elapsed` is announced by a timer that runs only
+  // while somebody listens.
+  watchFreshness: {
+    (listener: FreshnessListener): () => void;
+    <P extends PathOf<T>>(path: P, listener: FreshnessListener): () => void;
+  };
+  // This scope's own records, keyed by path — what a devtools panel lists. Stable between changes.
+  getFreshnessRecords: () => Readonly<Record<string, PathFreshness>>;
   destroy?: () => void;
   // Re-attaches a scoped store's parent subscription after a `destroy()` (no-op for root stores or when already
   // attached). Lets a provider survive React StrictMode's mount → unmount → remount, which reuses the store
@@ -335,6 +369,8 @@ export type UseStoreSyncOptions<T, TState extends object = object> = StoreHookRe
   syncStrategy?: 'render' | 'afterRender';
   // Mirror function values (a callback prop) as-is instead of running them as updaters — see `SetStateOptions.raw`.
   raw?: boolean;
+  // How long each synced value counts as current — see `SetStateOptions.ttl`.
+  ttl?: number;
 };
 
 export type UseStoreSyncMultiOptions<TState extends object = object> = Omit<
@@ -349,6 +385,8 @@ export type UseStoreSyncMultiOptions<TState extends object = object> = Omit<
   syncStrategy?: 'render' | 'afterRender';
   // Mirror function values (a callback prop) as-is instead of running them as updaters — see `SetStateOptions.raw`.
   raw?: boolean;
+  // How long each synced value counts as current — see `SetStateOptions.ttl`.
+  ttl?: number;
 };
 
 export type GetValueFn<TState extends object> = {

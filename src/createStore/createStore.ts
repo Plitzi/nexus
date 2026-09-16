@@ -6,12 +6,14 @@ import { isDev, isTest } from '../env';
 import { createChainReads } from './helpers/createChainReads';
 import { createSetState } from './helpers/createSetState';
 import { forwardParentChanges } from './helpers/forwardParentChanges';
+import FreshnessRegistry from './helpers/FreshnessRegistry';
 import PathTrie from './helpers/PathTrie';
 import { createScopeClaims } from './helpers/scopeCollisions';
 import Subscribers from './helpers/Subscribers';
 
 import type {
   ChangeListener,
+  FreshnessListener,
   GetState,
   Listener,
   PathOf,
@@ -92,6 +94,9 @@ function createStore<TState extends object>(
     }
   };
 
+  // A freshness listener that throws is a notify failure like any subscriber's.
+  const freshness = new FreshnessRegistry((error, path) => reportError(error, 'notify', path as PathOf<TState>));
+
   const getOwnState = () => state;
   const getOwnSnapshot = (): TState => (ownSnapshot ??= { ...state });
 
@@ -154,6 +159,7 @@ function createStore<TState extends object>(
     changeListeners,
     interceptors,
     readOnly: storeOptions?.readOnly ?? [],
+    freshness,
     reportError,
     invalidateDescendants,
     onDelegateToParent:
@@ -262,6 +268,40 @@ function createStore<TState extends object>(
     }
   };
 
+  // A scope holds only the records of the writes it committed; the rest were delegated, and live with the parent.
+  const getFreshness = <P extends PathOf<TState>>(path: P) => freshness.get(path) ?? parent?.getFreshness(path);
+  const isStale = <P extends PathOf<TState>>(path: P): boolean => {
+    const record = getFreshness(path);
+
+    return !record || Date.now() >= record.expiresAt;
+  };
+  const expire = <P extends PathOf<TState>>(path?: P): string[] => {
+    const own = freshness.expire(path, Date.now());
+    const inherited = parent ? parent.expire(path) : [];
+
+    return inherited.length === 0 ? own : [...own, ...inherited];
+  };
+  const watchFreshness = ((pathOrListener: PathOf<TState> | FreshnessListener, maybeListener?: FreshnessListener) => {
+    const path = typeof pathOrListener === 'function' ? undefined : pathOrListener;
+    const listener = typeof pathOrListener === 'function' ? pathOrListener : (maybeListener as FreshnessListener);
+    const relevant: FreshnessListener =
+      path === undefined
+        ? listener
+        : event => {
+            const at = event.path;
+            if (at === path || at.startsWith(`${path}.`) || path.startsWith(`${at}.`)) {
+              listener(event);
+            }
+          };
+    const unsubscribeOwn = freshness.subscribe(relevant);
+    const unsubscribeParent = parent?.watchFreshness(relevant);
+
+    return () => {
+      unsubscribeOwn();
+      unsubscribeParent?.();
+    };
+  }) as StoreApi<TState>['watchFreshness'];
+
   const withBase = (basePath: string): any => {
     const boundSet = (subPath: string | undefined, value: unknown, options?: SetStateOptions) =>
       setState((subPath === undefined ? basePath : `${basePath}.${subPath}`) as PathOf<TState>, value as any, options);
@@ -314,6 +354,11 @@ function createStore<TState extends object>(
     subscribe,
     subscribePath,
     subscribeChange,
+    getFreshness,
+    isStale,
+    expire,
+    watchFreshness,
+    getFreshnessRecords: () => freshness.getRecords(),
     destroy,
     reconnect,
     subscribeInvalidate: listener => invalidateListeners.add(listener),

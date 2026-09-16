@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/nexus",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "license": "Apache-2.0",
   "files": [
     "dist",
@@ -90,6 +90,11 @@
       "types": "./dist/createStore/createStore.d.ts",
       "import": "./dist/createStore/createStore.mjs",
       "default": "./dist/createStore/createStore.mjs"
+    },
+    "./createStore/helpers/FreshnessRegistry": {
+      "types": "./dist/createStore/helpers/FreshnessRegistry.d.ts",
+      "import": "./dist/createStore/helpers/FreshnessRegistry.mjs",
+      "default": "./dist/createStore/helpers/FreshnessRegistry.mjs"
     },
     "./createStore/helpers/PathTrie": {
       "types": "./dist/createStore/helpers/PathTrie.d.ts",
@@ -300,6 +305,16 @@
       "types": "./dist/react/hooks/useEntity.d.ts",
       "import": "./dist/react/hooks/useEntity.mjs",
       "default": "./dist/react/hooks/useEntity.mjs"
+    },
+    "./react/hooks/useFreshness": {
+      "types": "./dist/react/hooks/useFreshness.d.ts",
+      "import": "./dist/react/hooks/useFreshness.mjs",
+      "default": "./dist/react/hooks/useFreshness.mjs"
+    },
+    "./react/hooks/useOnStale": {
+      "types": "./dist/react/hooks/useOnStale.d.ts",
+      "import": "./dist/react/hooks/useOnStale.mjs",
+      "default": "./dist/react/hooks/useOnStale.mjs"
     },
     "./react/hooks/useStore": {
       "types": "./dist/react/hooks/useStore.d.ts",

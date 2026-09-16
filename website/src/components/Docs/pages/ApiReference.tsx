@@ -86,7 +86,7 @@ const ApiReference = () => (
           </td>
           <td>
             Write a path. <code>setState(undefined, partial)</code> merges the whole state. Options:{' '}
-            <code>&#123; canPropagate?, unmount?, raw? &#125;</code> — see{' '}
+            <code>&#123; canPropagate?, unmount?, raw?, ttl? &#125;</code> — see{' '}
             <a href="#/docs/api?anchor=write-options">write options</a>.
           </td>
         </tr>
@@ -138,6 +138,38 @@ const ApiReference = () => (
           </td>
           <td>
             Observe committed <code>&#123; path, prev, next &#125;</code>. The substrate middlewares ride.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>isStale</code> · <code>getFreshness</code>
+          </td>
+          <td>
+            <code>(p) =&gt; boolean</code> · <code>(p) =&gt; PathFreshness | undefined</code>
+          </td>
+          <td>
+            Whether a path is still current by the <code>ttl</code> it was written with — see{' '}
+            <a href="#/docs/api?anchor=ttl">freshness</a>.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <code>expire</code>
+          </td>
+          <td>
+            <code>(p?) =&gt; string[]</code>
+          </td>
+          <td>Mark a path (or everything) stale now, without touching values. Returns the expired paths.</td>
+        </tr>
+        <tr>
+          <td>
+            <code>watchFreshness</code> · <code>getFreshnessRecords</code>
+          </td>
+          <td>
+            <code>([p], listener) =&gt; () =&gt; void</code> · <code>() =&gt; Record&lt;string, PathFreshness&gt;</code>
+          </td>
+          <td>
+            Hear a path being recorded, expired, running out or dropped; list this scope&apos;s records.
           </td>
         </tr>
         <tr>
@@ -275,7 +307,7 @@ const [state, setState] = useStore();`}
       <code>useStore</code> returns, <code>useStoreSetter</code> — takes the same optional third argument.
     </p>
     <CodeBlock
-      code={`type SetStateOptions = { canPropagate?: boolean; unmount?: boolean; raw?: boolean };
+      code={`type SetStateOptions = { canPropagate?: boolean; unmount?: boolean; raw?: boolean; ttl?: number };
 
 // canPropagate: false — commit silently (no subscriber wakes)
 store.set('count', 1, { canPropagate: false });
@@ -285,7 +317,10 @@ store.set('sources.abc', undefined, { unmount: true });
 
 // raw: STORE a function instead of running it as an updater
 store.set('count', n => n + 1);                    // updater — n + 1 is stored
-store.set('slots.onSave', onSave, { raw: true });  // the function itself is stored`}
+store.set('slots.onSave', onSave, { raw: true });  // the function itself is stored
+
+// ttl: how long (ms) the written value counts as current
+store.set('queries.orders', answer, { ttl: 30_000 });`}
     />
     <p>
       Without <code>raw</code>, a function is the <strong>updater form</strong> (<code>prev =&gt; next</code>): it is
@@ -294,6 +329,45 @@ store.set('slots.onSave', onSave, { raw: true });  // the function itself is sto
       down the scope chain, and from every React setter; <code>beforeChange</code> interceptors see the function
       itself. Functions do not survive <code>persistMiddleware</code> (JSON) or SSR serialization — keep them
       client-side.
+    </p>
+
+    <h3 id="ttl">Freshness (ttl)</h3>
+    <p>
+      A write with <code>ttl</code> records when the path was written and when it stops being current. It is a fact
+      about the value, not a timer: nothing is removed and nobody is woken when it elapses. Read it back with{' '}
+      <code>isStale</code>, and pull it forward with <code>expire</code> when you know the data behind a value
+      changed — which is the pair a stale-while-revalidate cache needs.
+    </p>
+    <CodeBlock
+      code={`store.set('queries.orders', answer, { ttl: 30_000 });
+
+store.isStale('queries.orders');        // false — for the next 30 s
+store.isStale('queries.orders.items');  // false — a record covers its subtree
+store.getFreshness('queries.orders');   // { updatedAt, expiresAt }
+
+store.expire('queries');                // ['queries.orders'] — stale now, value untouched
+store.expire();                         // every record
+
+// Hear it: 'recorded' | 'expired' | 'elapsed' (the ttl ran out) | 'dropped'
+const stop = store.watchFreshness('queries', ({ type, path }) => {
+  if (type === 'expired') refetch(path);
+});
+
+// In React
+const { isStale, expiresAt } = useFreshness('queries.orders');
+useOnStale('queries.orders', event => console.log(event.type));
+useStoreSync('queries.orders', answer, { ttl: 30_000 });`}
+    />
+    <p>
+      A path never written with a <code>ttl</code> is stale, and so is one whose value was last replaced by a write
+      without it: a write replaces the subtree at its path, and the records inside it go with the old values. Records
+      above the path stay — a change inside a current value leaves it current. The most specific record wins.{' '}
+      <code>expire(path)</code> reaches the records at and below the
+      path and the ancestors that contain it, and returns what it expired so the caller can refresh just that.
+      Listeners hear it too, and hear a <code>ttl</code> running out — the store keeps one timer for that, only while
+      somebody listens. A silent write (<code>canPropagate: false</code>) announces nothing.
+      Records live in the scope that commits the write, so a delegated write is recorded by its owner and a scoped
+      store reads and expires through its parent.
     </p>
 
     <h2 id="key-types">Key types</h2>
@@ -322,7 +396,7 @@ store.set('slots.onSave', onSave, { raw: true });  // the function itself is sto
             <code>SetStateOptions</code>
           </td>
           <td>
-            <code>&#123; canPropagate?, unmount?, raw? &#125;</code> — third argument to every write.
+            <code>&#123; canPropagate?, unmount?, raw?, ttl? &#125;</code> — third argument to every write.
           </td>
         </tr>
         <tr>

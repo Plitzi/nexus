@@ -1,12 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import useFreshnessBase from './hooks/useFreshness';
+import useOnStaleBase from './hooks/useOnStale';
 import useStoreBase from './hooks/useStore';
 import useStoreGetterBase from './hooks/useStoreGetter';
 import useStoreSetterBase from './hooks/useStoreSetter';
 import useStoreSyncBase from './hooks/useStoreSync';
 
 import type {
+  FreshnessEvent,
   FullStateSetter,
   GetterTuple,
   GetValueFn,
@@ -29,6 +32,7 @@ import type {
   UseStoreSyncMultiOptions,
   UseStoreSyncOptions
 } from '../types';
+import type { FreshnessState, UseFreshnessOptions } from './hooks/useFreshness';
 
 export const createStoreHook = <TState extends object>() => {
   function useStore(options?: UseStoreOptions<TState, TState>): [TState, FullStateSetter<TState>];
@@ -146,7 +150,19 @@ export const createStoreHook = <TState extends object>() => {
     return (useStoreSetterBase as (a?: any, b?: any) => unknown)(arg, options);
   }
 
-  return { useStore, useStoreSync, useStoreGetter, useStoreSetter };
+  function useFreshness(path: PathOf<TState>, options?: UseFreshnessOptions<TState>): FreshnessState {
+    return useFreshnessBase<TState>(path, options);
+  }
+
+  function useOnStale(
+    path: PathOf<TState>,
+    callback: (event: FreshnessEvent) => void,
+    options?: UseFreshnessOptions<TState>
+  ): void {
+    useOnStaleBase<TState>(path, callback, options);
+  }
+
+  return { useStore, useStoreSync, useStoreGetter, useStoreSetter, useFreshness, useOnStale };
 };
 
 export default createStoreHook;
