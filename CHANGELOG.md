@@ -1,5 +1,20 @@
 # @plitzi/nexus
 
+## 1.2.1
+
+### Fixed
+
+- **A path both a scope and its chain hold is the same object until one of them changes.** When a scoped store and
+  an ancestor each contribute an object at a path — a list row and its list publishing under one source key — the
+  read is a merge. The merge was cached with every other chain read, and that cache drops on any ancestor commit, so
+  a write anywhere above (a source registering, the route changing) handed back a new object with the same content.
+  Every `useSyncExternalStore` reading the path took that for a change and rendered again: on a page with a list,
+  each navigation re-rendered every row several times for nothing.
+
+  The merge is now remembered per path together with the two values it was made from, and handed back for as long
+  as both are the same references. It also merges just that subtree instead of the whole scoped state. Covered by
+  `src/scopedStoreGetPath.test.ts`.
+
 ## 1.2.0
 
 ### Added

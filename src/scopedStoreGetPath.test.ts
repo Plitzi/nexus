@@ -35,6 +35,40 @@ describe('scoped store: getPath resolves a single path through the chain', () =>
     expect(child.getPath('nested.x')).toBe(1);
   });
 
+  /**
+   * A list row and its list publish under the same source key, so every read of it is a merge. An ancestor write
+   * anywhere — a source registering, the route changing — used to hand back a new merged object with the same content,
+   * and every element reading the path rendered again for it.
+   */
+  it('keeps a merged path the same object while neither side of it changes', () => {
+    type N = { sources: Record<string, unknown>; runtime: { sources: Record<string, unknown> } };
+    const root = createStore<N>({ sources: {}, runtime: { sources: { variables: { a: 1 } } } });
+    const list = createStore<N>({ runtime: { sources: { list: { items: [1, 2] } } } }, { parent: root });
+    const row = createStore<N>({ runtime: { sources: { list: { item: 1 } } } }, { parent: list });
+
+    const first = row.getPath('runtime.sources.list');
+    root.setState('sources.registered', { id: 'x' });
+    root.setState('runtime.sources.navigation', { page: 'b' });
+
+    expect(first).toEqual({ items: [1, 2], item: 1 });
+    expect(row.getPath('runtime.sources.list')).toBe(first);
+  });
+
+  it('merges again once either side of a merged path changes', () => {
+    type N = { runtime: { sources: Record<string, unknown> } };
+    const list = createStore<N>({ runtime: { sources: { list: { items: [1] } } } });
+    const row = createStore<N>({ runtime: { sources: { list: { item: 1 } } } }, { parent: list });
+
+    const first = row.getPath('runtime.sources.list');
+    list.setState('runtime.sources.list', { items: [1, 2] });
+    const second = row.getPath('runtime.sources.list');
+    row.setState('runtime.sources.list', { item: 2 });
+
+    expect(second).not.toBe(first);
+    expect(second).toEqual({ items: [1, 2], item: 1 });
+    expect(row.getPath('runtime.sources.list')).toEqual({ items: [1, 2], item: 2 });
+  });
+
   it('deep-merges when both the scope and the chain contribute an object at the path', () => {
     type N = { runtime: { sources: Record<string, unknown> } };
     const parent = createStore<N>({

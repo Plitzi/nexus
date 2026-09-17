@@ -48,6 +48,10 @@ export function createChainReads<TState extends object>(
   let merged: TState | undefined;
   let mergeCount = 0;
   const pathCache = new Map<string, unknown>();
+  // The last merge at each path, with the two values it was made from. Unlike `pathCache` it survives `invalidate`:
+  // an ancestor commit anywhere dirties every cached read, and without this a merged path came back as a NEW object
+  // with the same content, which every `useSyncExternalStore` reading it takes for a change.
+  const mergedByPath = new Map<string, { own: unknown; parent: unknown; value: unknown }>();
 
   const mergeNow = (): TState => {
     mergeCount++;
@@ -97,9 +101,18 @@ export function createChainReads<TState extends object>(
       return ownValue;
     }
 
-    // Both sides contribute an object at this path: fall back to the memoized full merge so the subtree stays
-    // referentially stable.
-    return getByPath(getState(), path);
+    // Both sides contribute an object at this path: merge just this subtree, and hand back the previous merge for as
+    // long as neither side has changed — the two reads are themselves stable, so their identity is the whole answer.
+    const previous = mergedByPath.get(path);
+    if (previous && previous.own === ownValue && previous.parent === parentValue) {
+      return previous.value as PathValue<TState, P>;
+    }
+
+    mergeCount++;
+    const value = deepMerge(parentValue, ownValue) as PathValue<TState, P>;
+    mergedByPath.set(path, { own: ownValue, parent: parentValue, value });
+
+    return value;
   };
 
   const getPath: GetPath<TState> = <P extends PathOf<TState>>(path: P): PathValue<TState, P> | undefined => {
@@ -125,6 +138,7 @@ export function createChainReads<TState extends object>(
     },
     resetCache: () => {
       pathCache.clear();
+      mergedByPath.clear();
       merged = undefined;
       stateDirty = true;
       pathDirty = false;
