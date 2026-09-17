@@ -47,7 +47,8 @@ class FreshnessRegistry {
   // A write replaces the subtree it lands on, so the records below it described values that are gone.
   record(path: string, ttl: number, now: number, silent: boolean): void {
     this.drop(path, silent, false);
-    const freshness = { updatedAt: now, expiresAt: now + Math.max(0, ttl) };
+    const life = Math.max(0, ttl);
+    const freshness = { updatedAt: now, expiresAt: now + life, ttl: life };
     this.records.set(path, freshness);
     this.announced.delete(path);
     this.changed();

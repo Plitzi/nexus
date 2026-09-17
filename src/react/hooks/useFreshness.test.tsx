@@ -99,6 +99,6 @@ describe('useStoreSync ttl', () => {
     expect(store.isStale('orders')).toBe(true);
 
     rerender({ total: 2 });
-    expect(store.getFreshness('orders')).toEqual({ updatedAt: 1_600, expiresAt: 2_100 });
+    expect(store.getFreshness('orders')).toEqual({ updatedAt: 1_600, expiresAt: 2_100, ttl: 500 });
   });
 });

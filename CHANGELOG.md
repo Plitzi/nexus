@@ -1,6 +1,14 @@
 # @plitzi/nexus
 
-## 1.2.1
+## 1.2.2
+
+### Changed
+
+- **A freshness record carries the `ttl` it was written with.** `PathFreshness` gains `ttl`, and `expire` leaves it
+  alone while it pulls `expiresAt` forward. Without it, a write of `ttl: 0` — held but never current — and a path
+  somebody expired the instant they wrote it are the same two instants, so nothing downstream could tell "not being
+  kept at all" from "was kept, then dropped". The devtools TTL panel is the reader that needed it. Covered by
+  `src/ttl.test.ts`.
 
 ### Fixed
 

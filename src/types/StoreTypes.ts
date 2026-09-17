@@ -154,7 +154,11 @@ export type Listener = (changedPath?: Path) => void;
 export type SetStateOptions = { canPropagate?: boolean; unmount?: boolean; raw?: boolean; ttl?: number };
 
 // When a path written with a `ttl` was written, and the instant it stops being current (`expire` pulls that forward).
-export type PathFreshness = { updatedAt: number; expiresAt: number };
+//
+// `ttl` is the one it was WRITTEN with, which `expire` leaves alone: without it, a write of `ttl: 0` — held but never
+// current — and a path somebody expired the moment they wrote it are the same two numbers, and a reader cannot tell
+// "this is not being kept at all" from "this was kept and then dropped".
+export type PathFreshness = { updatedAt: number; expiresAt: number; ttl: number };
 
 // A change of freshness: `recorded` by a `ttl` write, `expired` by `expire`, `elapsed` when its `ttl` ran out, and
 // `dropped` when the value it described was replaced or removed. Silent (`canPropagate: false`) writes emit nothing.

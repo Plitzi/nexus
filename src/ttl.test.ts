@@ -38,7 +38,7 @@ describe('setState ttl', () => {
     const store = createStore<State>({});
 
     store.setState('a', 1, { ttl: 500 });
-    expect(store.getFreshness('a')).toEqual({ updatedAt: 1_000, expiresAt: 1_500 });
+    expect(store.getFreshness('a')).toEqual({ updatedAt: 1_000, expiresAt: 1_500, ttl: 500 });
     expect(store.isStale('a')).toBe(false);
 
     vi.advanceTimersByTime(499);
@@ -173,8 +173,23 @@ describe('expire', () => {
 
     expect(store.isStale('a')).toBe(true);
     expect(store.getState().a).toBe(1);
-    expect(store.getFreshness('a')).toEqual({ updatedAt: 1_000, expiresAt: 1_000 });
+    expect(store.getFreshness('a')).toEqual({ updatedAt: 1_000, expiresAt: 1_000, ttl: 500 });
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  /**
+   * A reader has to be able to tell "never kept" from "kept and then dropped", and after an `expire` both hold the
+   * same two instants. The TTL it was written with is what separates them.
+   */
+  it('leaves the ttl it was written with alone, so a `ttl: 0` write stays recognisable', () => {
+    const store = createStore<State>({});
+    store.setState('a', 1, { ttl: 500 });
+    store.setState('local', 1, { ttl: 0 });
+
+    store.expire();
+
+    expect(store.getFreshness('a')).toEqual({ updatedAt: 1_000, expiresAt: 1_000, ttl: 500 });
+    expect(store.getFreshness('local')).toEqual({ updatedAt: 1_000, expiresAt: 1_000, ttl: 0 });
   });
 
   it('reaches the records below the path and the ancestors that contain it, and nothing beside it', () => {
@@ -365,7 +380,7 @@ describe('watchFreshness', () => {
     store.setState('a', 1, { ttl: 500 });
     const first = store.getFreshnessRecords();
 
-    expect(first).toEqual({ a: { updatedAt: 1_000, expiresAt: 1_500 } });
+    expect(first).toEqual({ a: { updatedAt: 1_000, expiresAt: 1_500, ttl: 500 } });
     expect(store.getFreshnessRecords()).toBe(first);
 
     store.expire('a');
