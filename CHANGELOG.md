@@ -10,6 +10,8 @@
   kept at all" from "was kept, then dropped". The devtools TTL panel is the reader that needed it. Covered by
   `src/ttl.test.ts`.
 
+## 1.2.1
+
 ### Fixed
 
 - **A path both a scope and its chain hold is the same object until one of them changes.** When a scoped store and
