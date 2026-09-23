@@ -171,6 +171,106 @@ describe('persist middleware', () => {
   });
 });
 
+/**
+ * `paths` mode shaping what it writes and how it puts it back — the per-path `partialize` and `merge`. Without them a
+ * persisted subtree is written whole and restored whole: nothing in it can be left out, and a key the app added since
+ * the entry was written is wiped by the first restore.
+ */
+describe('persist middleware / per path', () => {
+  type Prefs = { prefs: { theme: string; draft?: string; density?: string }; count: number };
+  const prefsInitial = (): Prefs => ({ prefs: { theme: 'light', density: 'comfortable' }, count: 0 });
+  const omitDraft = (_path: string, value: unknown): unknown =>
+    Object.fromEntries(Object.entries(value as Prefs['prefs']).filter(([key]) => key !== 'draft'));
+
+  const stored = (data: Map<string, string>) =>
+    JSON.parse(data.get('app') ?? 'null') as { version: number; state: { prefs?: Prefs['prefs'] } };
+
+  it('writes each path through partializePath', () => {
+    const { storage, data } = memoryStorage();
+    const store = createStore<Prefs>(prefsInitial(), {
+      middlewares: [persistMiddleware<Prefs>({ key: 'app', storage, paths: ['prefs'], partializePath: omitDraft })]
+    });
+
+    store.setState('prefs', { theme: 'dark', draft: 'half a sentence' });
+
+    expect(stored(data)).toEqual({ version: 0, state: { prefs: { theme: 'dark' } } });
+  });
+
+  it('hands partializePath the whole state, so what it leaves out can depend on it', () => {
+    const { storage, data } = memoryStorage();
+    const store = createStore<Prefs>(prefsInitial(), {
+      middlewares: [
+        persistMiddleware<Prefs>({
+          key: 'app',
+          storage,
+          paths: ['prefs'],
+          partializePath: (_path, value, state) => (state.count > 0 ? value : {})
+        })
+      ]
+    });
+
+    store.setState('prefs', { theme: 'dark' });
+
+    expect(stored(data).state.prefs).toEqual({});
+  });
+
+  it('restores each path through mergePath, with the value it holds now', () => {
+    const { storage, data } = memoryStorage();
+    // Written by an older build, before `density` existed.
+    data.set('app', JSON.stringify({ version: 0, state: { prefs: { theme: 'dark' } } }));
+
+    const store = createStore<Prefs>(prefsInitial(), {
+      middlewares: [
+        persistMiddleware<Prefs>({
+          key: 'app',
+          storage,
+          paths: ['prefs'],
+          mergePath: (_path, persisted, current) => ({ ...(current as object), ...(persisted as object) })
+        })
+      ]
+    });
+
+    expect(store.getState().prefs).toEqual({ theme: 'dark', density: 'comfortable' });
+  });
+
+  it('replaces the path whole without mergePath, as before', () => {
+    const { storage, data } = memoryStorage();
+    data.set('app', JSON.stringify({ version: 0, state: { prefs: { theme: 'dark' } } }));
+
+    const store = createStore<Prefs>(prefsInitial(), {
+      middlewares: [persistMiddleware<Prefs>({ key: 'app', storage, paths: ['prefs'] })]
+    });
+
+    expect(store.getState().prefs).toEqual({ theme: 'dark' });
+  });
+
+  it('keeps a value written before a deferred restore when mergePath says so', () => {
+    const { storage, data } = memoryStorage();
+    data.set('app', JSON.stringify({ version: 0, state: { prefs: { theme: 'dark', draft: 'old' } } }));
+
+    const store = createStore<Prefs>(prefsInitial(), {
+      middlewares: [
+        persistMiddleware<Prefs>({
+          key: 'app',
+          storage,
+          paths: ['prefs'],
+          partializePath: omitDraft,
+          mergePath: (_path, persisted, current) => ({
+            ...(omitDraft('prefs', persisted) as object),
+            draft: (current as Prefs['prefs']).draft
+          })
+        })
+      ],
+      deferHydrate: true
+    });
+
+    store.setState('prefs.draft', 'typed before the restore');
+    store.hydrate?.();
+
+    expect(store.getState().prefs).toEqual({ theme: 'dark', draft: 'typed before the restore' });
+  });
+});
+
 describe('enabled control', () => {
   it('skips a middleware entirely when enabled is false (no observers, no hydrate)', () => {
     const { storage, data } = memoryStorage();

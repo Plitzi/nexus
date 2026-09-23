@@ -22,10 +22,17 @@ export type PersistOptions<TState extends object> = MiddlewareOptions<TState> & 
   // Persist only these subtrees and rehydrate each in place. Takes precedence over `partialize`.
   paths?: ReadonlyArray<PathOf<TState>>;
   partialize?: (state: TState) => Partial<TState>;
+  // `paths` mode's `partialize`: what is written for one path — its value, unless this says otherwise. Leaves a part
+  // of a persisted subtree out (a secret, a value meant to start fresh) without persisting each sibling separately.
+  partializePath?: (path: PathOf<TState>, value: unknown, state: TState) => unknown;
   version?: number;
   migrate?: (persisted: unknown, version: number) => unknown;
-  // Not used in `paths` mode, where each path is restored at its own location.
+  // Not used in `paths` mode, where each path is restored at its own location — see `mergePath`.
   merge?: (persisted: Partial<TState>, current: TState) => Partial<TState>;
+  // `paths` mode's `merge`: what a stored value becomes when it is put back at its path, given the value the path holds
+  // at that moment. Without it the stored value replaces the path whole, so a key the app has added since — a new
+  // default — is gone after the first restore of an older entry, and so is anything written before the restore.
+  mergePath?: (path: PathOf<TState>, persisted: unknown, current: unknown, state: TState) => unknown;
 };
 
 const resolveStorage = (target: PersistTarget = 'local'): PersistStorage | undefined => {
@@ -47,7 +54,18 @@ type Envelope = { version: number; state: unknown };
 // Mirrors the store to a key/value storage and rehydrates on creation. Place it first in `middlewares` so it hydrates
 // before logger/history observe anything.
 export const persistMiddleware = <TState extends object>(options: PersistOptions<TState>): StoreMiddleware<TState> => {
-  const { key, storage: target, paths, partialize, version = 0, migrate, merge, enabled } = options;
+  const {
+    key,
+    storage: target,
+    paths,
+    partialize,
+    partializePath,
+    version = 0,
+    migrate,
+    merge,
+    mergePath,
+    enabled
+  } = options;
   const dynamicTarget = typeof target === 'function' ? target : undefined;
   const staticStorage = typeof target === 'function' ? undefined : resolveStorage(target);
 
@@ -70,7 +88,8 @@ export const persistMiddleware = <TState extends object>(options: PersistOptions
     if (paths) {
       const fragment: Record<string, unknown> = {};
       for (const path of paths) {
-        fragment[path] = getByPath(state, path);
+        const value = getByPath(state, path);
+        fragment[path] = partializePath ? partializePath(path, value, state) : value;
       }
 
       return fragment;
@@ -117,7 +136,7 @@ export const persistMiddleware = <TState extends object>(options: PersistOptions
       }
 
       hydrated = true;
-      hydrate(api, key, storage, version, paths, migrate, merge);
+      hydrate(api, key, storage, { version, paths, migrate, merge, mergePath });
     };
 
     return {
@@ -134,14 +153,16 @@ export const persistMiddleware = <TState extends object>(options: PersistOptions
   };
 };
 
+type HydrateOptions<TState extends object> = Pick<
+  PersistOptions<TState>,
+  'paths' | 'migrate' | 'merge' | 'mergePath'
+> & { version: number };
+
 function hydrate<TState extends object>(
   api: StoreApi<TState>,
   key: string,
   storage: PersistStorage | undefined,
-  version: number,
-  paths: PersistOptions<TState>['paths'],
-  migrate: PersistOptions<TState>['migrate'],
-  merge: PersistOptions<TState>['merge']
+  { version, paths, migrate, merge, mergePath }: HydrateOptions<TState>
 ): void {
   const raw = storage?.getItem(key);
   if (!raw) {
@@ -174,7 +195,10 @@ function hydrate<TState extends object>(
       api.batch(() => {
         for (const path of paths) {
           if (path in fragment) {
-            api.setState(path, fragment[path] as never);
+            const value = mergePath
+              ? mergePath(path, fragment[path], getByPath(api.getState(), path), api.getState())
+              : fragment[path];
+            api.setState(path, value as never);
           }
         }
       });

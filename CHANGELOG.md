@@ -1,5 +1,18 @@
 # @plitzi/nexus
 
+## 1.3.0
+
+### Added
+
+- **`paths` mode can shape what it persists and how it puts it back.** `persistMiddleware` gains `partializePath(path,
+  value, state)` — what is written for one path — and `mergePath(path, persisted, current, state)` — what a stored
+  value becomes when it is restored, given the value the path holds at that moment. They are `partialize` and `merge`
+  for `paths` mode, which had neither: a persisted subtree was written whole (nothing in it could be left out — a
+  secret, a value meant to start fresh every visit) and restored whole, so a key the app added since the entry was
+  written was wiped by the first restore of an older entry, and so was anything written before a deferred restore.
+  Both are optional; without them `paths` mode behaves exactly as before. Covered by
+  `src/middleware/middleware.test.ts`.
+
 ## 1.2.2
 
 ### Changed

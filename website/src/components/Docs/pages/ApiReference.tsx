@@ -572,7 +572,10 @@ const off = items.subscribeOne(id, listener);`}
             <code>persistMiddleware(opts)</code>
           </td>
           <td>
-            Mirror to storage + rehydrate. <code>key, storage, partialize, version, migrate, merge</code>.
+            Mirror to storage + rehydrate. <code>key, storage, partialize, version, migrate, merge</code>. With{' '}
+            <code>paths</code>, each subtree is written and restored at its own location, shaped by{' '}
+            <code>partializePath</code> (what is written) and <code>mergePath</code> (what the stored value becomes,
+            given the value the path holds now).
           </td>
         </tr>
         <tr>
