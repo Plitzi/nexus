@@ -4,9 +4,16 @@ import parsePath from './parsePath';
 
 import type { PathOf, PathValue } from '../types';
 
-// One cached accessor closure per dotted path, so the split + loop happens once instead of on every read.
+/**
+ * One cached accessor closure per dotted path, so the split + loop happens once instead of on every read.
+ *
+ * Bounded, and once full it keeps what it has rather than evicting: a page reads its elements' paths in the same order
+ * on every render, and a first-in-first-out cache smaller than that set evicted each path just before it was read
+ * again — every read a miss plus the churn of evicting, measured slower than no cache at all. Past the bound a path is
+ * resolved without being cached; 4096 holds a page of well over a thousand elements.
+ */
 const cached = new Map<string, (obj: unknown) => unknown>();
-const MAX_CACHED = 512;
+const MAX_CACHED = 4096;
 
 const makeAccessor = (keys: readonly string[]): ((obj: unknown) => unknown) => {
   if (keys.length === 1) {
@@ -36,13 +43,9 @@ const getAccessor = (path: string): ((obj: unknown) => unknown) => {
 
   if (!fn) {
     fn = makeAccessor(parsePath(path));
-
-    if (cached.size >= MAX_CACHED) {
-      const first = cached.keys().next().value as string;
-
-      cached.delete(first);
+    if (cached.size < MAX_CACHED) {
+      cached.set(path, fn);
     }
-    cached.set(path, fn);
   }
 
   return fn;

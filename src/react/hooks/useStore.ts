@@ -1,16 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useMemo, useRef, useSyncExternalStore } from 'react';
 
-import {
-  defaultMultiEqualityFn,
-  makeMultiSnapshot,
-  makeSingleSnapshot,
-  useMultiExternalStore,
-  useMultiSetters,
-  useMultiSubscribe,
-  useResolvedStore
-} from './shared';
+import { defaultMultiEqualityFn, useResolvedStore } from './shared';
+import getByPath from '../../helpers/getByPath';
 import shallowEqual from '../../helpers/shallowEqual';
 
 import type {
@@ -34,120 +27,60 @@ import type {
 export { defaultMultiEqualityFn } from './shared';
 export type { MultiPathReturn, UseStoreOptions, UseStoreMultiOptions, UseStoreReturn };
 
-const EMPTY_PATHS: ReadonlyArray<never> = [];
+/** A snapshot not taken yet — distinct from every value a store can hold, `undefined` included. */
+const UNSET: unique symbol = Symbol('unset');
 
-function useSingleStore<TState extends object>(
+type Selector<TState extends object> =
+  PathOf<TState> | ReadonlyArray<PathOrFn<TState>> | ((state: TState) => PathOf<TState>) | undefined;
+
+// `Array.isArray` does not narrow a union holding a readonly array; this does.
+const isPathList = <TState extends object>(arg: Selector<TState>): arg is ReadonlyArray<PathOrFn<TState>> =>
+  Array.isArray(arg);
+
+/** What identifies a selection for memoization: the path or function itself, or for a list what it holds. */
+const selectionKey = <TState extends object>(arg: Selector<TState>): unknown =>
+  isPathList(arg) ? `[${arg.map((p, i) => (typeof p === 'function' ? `fn_${i}` : p)).join('|')}]` : arg;
+
+const readOne = <TState extends object>(
   store: StoreApi<TState>,
-  pathOrFn: PathOf<TState> | ((state: TState) => PathOf<TState>) | undefined,
-  options: UseStoreOptions<any>
-): [unknown, (value: unknown, setOptions?: SetStateOptions) => void] {
-  const mode = options.mode ?? 'sync';
-  const enabled = options.enabled ?? true;
-  const isFullState = pathOrFn === undefined;
-  const equalityFn =
-    (options.equalityFn as ((a: unknown, b: unknown) => boolean) | undefined) ??
-    (isFullState ? shallowEqual : Object.is);
-  const transformer = options.transformer as ((value: unknown) => unknown) | undefined;
-  const transformerRef = useRef<typeof transformer>(transformer);
-  transformerRef.current = transformer;
+  pathOrFn: PathOf<TState> | ((state: TState) => PathOf<TState>) | undefined
+): unknown => {
+  if (typeof pathOrFn === 'string') {
+    return store.getPath(pathOrFn);
+  }
 
-  const getSnapshot = useMemo(() => makeSingleSnapshot(store, pathOrFn), [store, pathOrFn]);
+  if (typeof pathOrFn === 'function') {
+    const state = store.getState();
 
-  const lastRef = useRef<unknown>(getSnapshot());
+    return getByPath(state, pathOrFn(state));
+  }
 
-  const subscribe = useMemo(
-    () =>
-      (cb: () => void): (() => void) => {
-        if (!enabled || mode === 'mount') {
-          return () => {};
-        }
+  return store.getState();
+};
 
-        if (typeof pathOrFn === 'string') {
-          return store.subscribePath(pathOrFn, cb);
-        }
-
-        return store.subscribe(cb);
-      },
-    [enabled, mode, pathOrFn, store]
-  );
-
-  const getSnap = () => {
-    if (!enabled) {
-      return lastRef.current;
-    }
-
-    if (mode === 'mount') {
-      return getSnapshot();
-    }
-
-    const next = getSnapshot();
-    if (equalityFn(lastRef.current, next)) {
-      return lastRef.current;
-    }
-
-    lastRef.current = next;
-    return next;
-  };
-
-  const raw = useSyncExternalStore(subscribe, getSnap, getSnap);
-
-  const result = useMemo(() => (transformerRef.current ? transformerRef.current(raw) : raw), [raw]);
-
-  const setState = useCallback(
-    (value: unknown, setOptions?: SetStateOptions) => {
-      if (isFullState) {
-        store.setState(undefined, value as TState, setOptions);
-      } else if (typeof pathOrFn === 'function') {
-        store.setState(pathOrFn(store.getState()), value as PathValue<TState, PathOf<TState>>, setOptions);
-      } else {
-        store.setState(pathOrFn, value as PathValue<TState, PathOf<TState>>, setOptions);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, pathOrFn]
-  );
-
-  return [result, setState];
-}
-
-function useMultiStore<TState extends object>(
+const readMany = <TState extends object>(
   store: StoreApi<TState>,
-  paths: ReadonlyArray<PathOrFn<TState>>,
-  options: UseStoreMultiOptions<TState, any>
-): unknown {
-  const mode = options.mode ?? 'sync';
-  const enabled = options.enabled ?? true;
-  const equalityFn =
-    (options.equalityFn as ((a: unknown[], b: unknown[]) => boolean) | undefined) ?? defaultMultiEqualityFn;
-  const transformer = options.transformer as ((values: unknown[]) => unknown) | undefined;
-  const transformerRef = useRef<typeof transformer>(transformer);
-  transformerRef.current = transformer;
+  paths: ReadonlyArray<PathOrFn<TState>>
+): unknown[] => {
+  const state = paths.some(p => typeof p === 'function') ? store.getState() : undefined;
 
-  const pathsRef = useRef<ReadonlyArray<PathOrFn<TState>>>(paths);
-  pathsRef.current = paths;
+  return paths.map(p => (typeof p === 'function' ? getByPath(state, p(state as TState)) : store.getPath(p)));
+};
 
-  const pathsKey = paths.map((p, i) => (typeof p === 'function' ? `fn_${i}` : p)).join('|');
-
-  const lastRef = useRef<unknown[] | null>(null);
-
-  const getSnapshot = useMemo(
-    () => makeMultiSnapshot(store, pathsRef, lastRef, { equalityFn }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, pathsKey, equalityFn]
-  );
-
-  const subscribe = useMultiSubscribe(store, pathsRef, pathsKey, enabled, mode);
-  const rawSelected = useMultiExternalStore(subscribe, getSnapshot, enabled, lastRef);
-
-  const result = useMemo(
-    () => (transformerRef.current ? transformerRef.current(rawSelected) : rawSelected),
-    [rawSelected]
-  );
-
-  const setters = useMultiSetters(store, pathsRef, pathsKey);
-
-  return [result, ...setters];
-}
+const writeOne = <TState extends object>(
+  store: StoreApi<TState>,
+  pathOrFn: PathOrFn<TState> | undefined,
+  value: unknown,
+  setOptions?: SetStateOptions
+): void => {
+  if (pathOrFn === undefined) {
+    store.setState(undefined, value as TState, setOptions);
+  } else if (typeof pathOrFn === 'function') {
+    store.setState(pathOrFn(store.getState()), value as PathValue<TState, PathOf<TState>>, setOptions);
+  } else {
+    store.setState(pathOrFn, value as PathValue<TState, PathOf<TState>>, setOptions);
+  }
+};
 
 function useStore<TState extends object>(
   arg?: undefined,
@@ -211,24 +144,105 @@ function useStore<TState extends object>(
   options: UseStoreOptions<any, any> = {}
 ): unknown {
   const store = useResolvedStore(options.store, 'useStore', options.storeId);
-  const isMulti = Array.isArray(arg);
+  const isMulti = isPathList(arg);
+  const mode = options.mode ?? 'sync';
+  const enabled = options.enabled ?? true;
+  const equalityFn =
+    (options.equalityFn as ((a: unknown, b: unknown) => boolean) | undefined) ??
+    (isMulti
+      ? (defaultMultiEqualityFn as (a: unknown, b: unknown) => boolean)
+      : arg === undefined
+        ? shallowEqual
+        : Object.is);
 
-  // Both branches always run to keep the hook order stable when a call site
-  // switches between a single path and an array of paths. The inactive branch is
-  // disabled so it never subscribes nor runs a transformer over the wrong shape.
-  const singleResult = useSingleStore(
-    store,
-    isMulti ? undefined : (arg as PathOf<TState> | ((state: TState) => PathOf<TState>) | undefined),
-    isMulti ? { ...options, enabled: false, transformer: undefined } : options
+  /**
+   * One set of hooks for a single path and a list of paths alike, so a call site may switch between the two without
+   * changing the hooks it runs. It used to run a single-path and a multi-path hook side by side on every call, the
+   * idle one disabled — twice the hooks and a copied options object on every render of every component that reads a
+   * store, which was a quarter of what rendering a page allocated.
+   */
+  const transformerRef = useRef(options.transformer as ((value: unknown) => unknown) | undefined);
+  transformerRef.current = options.transformer as ((value: unknown) => unknown) | undefined;
+  const argRef = useRef(arg);
+  argRef.current = arg;
+  const lastRef = useRef<unknown>(UNSET);
+  const shapeRef = useRef(isMulti);
+  if (shapeRef.current !== isMulti) {
+    // A value of the other shape must never be handed back as this one's, however equal the two look.
+    shapeRef.current = isMulti;
+    lastRef.current = UNSET;
+  }
+
+  // The memos below read the selection through `argRef` and are keyed on what it holds, so a list rebuilt with the
+  // same paths on every render does not rebuild them. `key` is the dependency the linter cannot see through the ref.
+  const key = selectionKey(arg);
+
+  const getSnapshot = useMemo(
+    () => (): unknown => {
+      const current = argRef.current;
+      if (!enabled && lastRef.current !== UNSET) {
+        return lastRef.current;
+      }
+
+      const next = isPathList(current) ? readMany(store, current) : readOne(store, current);
+      // `mount` reads once and follows nothing, so a single value is not held; a list still is, to stay one array.
+      if (lastRef.current !== UNSET && (mode !== 'mount' || isPathList(current)) && equalityFn(lastRef.current, next)) {
+        return lastRef.current;
+      }
+
+      lastRef.current = next;
+
+      return next;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, key, enabled, mode, equalityFn]
   );
 
-  const multiResult = useMultiStore(
-    store,
-    isMulti ? (arg as ReadonlyArray<PathOrFn<TState>>) : EMPTY_PATHS,
-    isMulti ? options : { ...options, enabled: false, transformer: undefined }
+  const subscribe = useMemo(
+    () =>
+      (cb: () => void): (() => void) => {
+        const current = argRef.current;
+        if (!enabled || mode === 'mount') {
+          return () => {};
+        }
+
+        if (typeof current === 'string') {
+          return store.subscribePath(current, cb);
+        }
+
+        if (!isPathList(current) || current.some(p => typeof p === 'function')) {
+          return store.subscribe(cb);
+        }
+
+        const unsubscribes = current.map(p => store.subscribePath(p as PathOf<TState>, cb));
+
+        return () => unsubscribes.forEach(unsubscribe => unsubscribe());
+      },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, key, enabled, mode]
   );
 
-  return isMulti ? multiResult : singleResult;
+  const raw = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+
+  const result = useMemo(() => (transformerRef.current ? transformerRef.current(raw) : raw), [raw]);
+
+  const setters = useMemo(() => {
+    const current = argRef.current;
+    if (!isPathList(current)) {
+      return [
+        (value: unknown, setOptions?: SetStateOptions) =>
+          writeOne(store, argRef.current as PathOrFn<TState> | undefined, value, setOptions)
+      ];
+    }
+
+    return current.map((_, index) => (value: unknown, setOptions?: SetStateOptions) => {
+      const paths = argRef.current as ReadonlyArray<PathOrFn<TState>>;
+      writeOne(store, paths[index], value, setOptions);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, key]);
+
+  return [result, ...setters];
 }
 
 export type { PathSetters, PathValues };

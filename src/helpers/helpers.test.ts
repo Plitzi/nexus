@@ -103,3 +103,26 @@ describe('parsePath', () => {
     expect(parsePath('a.b.c')).toBe(parsePath('a.b.c'));
   });
 });
+
+describe('path caches past their bound', () => {
+  // More distinct paths than either cache holds, read twice in the same order — how a large page renders twice.
+  const count = 6000;
+  const state = { elements: Object.fromEntries(Array.from({ length: count }, (_, i) => [`el${i}`, { value: i }])) };
+  const paths = Array.from({ length: count }, (_, i) => `elements.el${i}.value`);
+
+  it('reads every path right, cached or not, on every pass', () => {
+    for (let pass = 0; pass < 2; pass++) {
+      paths.forEach((path, i) => {
+        expect(getByPath(state, path as never)).toBe(i);
+      });
+    }
+  });
+
+  it('parses every path right, cached or not, on every pass', () => {
+    for (let pass = 0; pass < 2; pass++) {
+      paths.forEach((path, i) => {
+        expect(parsePath(path)).toEqual(['elements', `el${i}`, 'value']);
+      });
+    }
+  });
+});

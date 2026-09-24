@@ -1,5 +1,31 @@
 # @plitzi/nexus
 
+## 1.3.1
+
+### Changed
+
+- **`useStore` runs one set of hooks, not two.** To keep the hook order stable when a call site switches between a
+  single path and a list of paths, it ran a single-path and a multi-path hook side by side on every call, the idle one
+  disabled — twice the hooks, two `useSyncExternalStore` subscriptions' worth of bookkeeping and a copied options
+  object on every render of every component that reads a store. It is now one hook sequence for both shapes, which
+  keeps that guarantee: rendering a Plitzi page allocates about a quarter less, and the 500-hook stress test runs ~27%
+  faster. The first snapshot is also no longer recomputed on every render only to be thrown away. Behaviour is
+  unchanged; covered by `src/store.test.tsx`, which gains the shape-switch and `mode: 'mount'` cases.
+
+### Fixed
+
+- **`useStoreGetter` reads a function entry from the latest render.** Its getters were keyed on each function's
+  source text, so two closures with the same text were the same entry: `useStoreGetter([state => state.items[id]])`
+  went on reading the first render's `id` after it changed. The entries are now read at call time and the getters
+  keyed on the paths alone, a function by its position — which also stops stringifying every function on every render.
+  Getters stay stable while the paths are the same. Covered by `src/react/hooks/useStoreGetter.test.tsx`.
+- **Path reads stay cached on a large page.** The accessor and segment caches behind every path read, write and
+  subscription held 512 paths and evicted the oldest when full. A page reads its elements' paths in the same order on
+  every render, so once it had more than 512 of them — a few hundred elements — each path was evicted just before it
+  was read again: every read a miss plus the eviction, ~1 µs where a cached read is ~0.1 µs, slower than no cache at
+  all. They hold 4096 now and, once full, keep what they have instead of evicting; results are unchanged. Covered by
+  `src/helpers/helpers.test.ts`.
+
 ## 1.3.0
 
 ### Added

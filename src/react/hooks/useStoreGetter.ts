@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
 import { useResolvedStore } from './shared';
 import getByPath from '../../helpers/getByPath';
@@ -38,12 +38,21 @@ function useStoreGetter<TState extends object>(
     typeof arg === 'object' && !Array.isArray(arg) ? (arg as UseStoreGetterOptions<TState>) : options;
 
   const store = useResolvedStore(resolvedOptions?.store, 'useStoreGetter', resolvedOptions?.storeId);
-  const entriesKey = resolvedEntries?.map(e => (typeof e === 'function' ? e.toString() : e)).join('|');
+  /**
+   * The entries are read at call time, from the latest render, and the getters are keyed on the PATHS alone — a
+   * function counts by its position. Keyed on a function's source instead, two closures with the same text were the
+   * same entry: `[state => state.items[id]]` went on reading the first render's `id` after it changed. And every
+   * render stringified every function to find that out.
+   */
+  const entriesRef = useRef(resolvedEntries);
+  entriesRef.current = resolvedEntries;
+  const entriesKey = resolvedEntries?.map((e, i) => (typeof e === 'function' ? `fn_${i}` : e)).join('|');
 
   return useMemo(
     () => {
       if (resolvedEntries) {
-        return resolvedEntries.map(entry => (subPath?: string, callDefault?: unknown): any => {
+        return resolvedEntries.map((_, index) => (subPath?: string, callDefault?: unknown): any => {
+          const entry = (entriesRef.current ?? resolvedEntries)[index];
           const base =
             typeof entry === 'function'
               ? entry(store.getState())

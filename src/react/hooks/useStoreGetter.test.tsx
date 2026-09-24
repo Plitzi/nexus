@@ -836,3 +836,53 @@ describe('useStoreGetter — store option', () => {
     expect(getName()).toBe('Ext');
   });
 });
+
+// ─── Entries that are functions ───────────────────────────────────────────────
+
+describe('useStoreGetter — function entries', () => {
+  // Two closures with the same source text are different functions: what one captured is not what the other did.
+  it('reads with the entry of the latest render, not an earlier closure with the same source', () => {
+    const store = makeStore();
+
+    const { result, rerender } = renderHook(
+      ({ id }: { id: string }) =>
+        useStoreGetter<AppState, readonly [(state: AppState) => unknown]>([state => state.schema.flat[id]]),
+      { wrapper: makeWrapper(store), initialProps: { id: 'btn1' } }
+    );
+    expect(result.current[0]()).toEqual({ label: 'Button', type: 'button' });
+
+    rerender({ id: 'txt1' });
+
+    expect(result.current[0]()).toEqual({ label: 'Text', type: 'text' });
+  });
+
+  it('keeps the getters stable across renders whose entries are new closures of the same shape', () => {
+    const store = makeStore();
+
+    const { result, rerender } = renderHook(
+      () => useStoreGetter<AppState, readonly [(state: AppState) => unknown, 'count']>([state => state.user, 'count']),
+      { wrapper: makeWrapper(store) }
+    );
+    const first = result.current;
+    rerender();
+
+    expect(result.current).toBe(first);
+    expect(result.current[1]()).toBe(0);
+  });
+
+  it('builds new getters when the paths it names change', () => {
+    const store = makeStore();
+    let path: 'count' | 'user.name' = 'count';
+
+    const { result, rerender } = renderHook(() => useStoreGetter<AppState, readonly ['count' | 'user.name']>([path]), {
+      wrapper: makeWrapper(store)
+    });
+    const first = result.current;
+
+    path = 'user.name';
+    rerender();
+
+    expect(result.current).not.toBe(first);
+    expect(result.current[0]()).toBe('Alice');
+  });
+});

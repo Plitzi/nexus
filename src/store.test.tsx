@@ -620,6 +620,51 @@ describe('store enabled / options', () => {
     });
   });
 
+  describe('useStore: shape switch hands back the new shape', () => {
+    const useStoreDynamic = useStore as unknown as (
+      arg: PathOf<AppState> | ReadonlyArray<PathOf<AppState>>
+    ) => [unknown, ...unknown[]];
+
+    // A string and a list with the same items compare equal item by item; the list must still come back a list.
+    it('never returns the previous single value as the list it happens to look like', () => {
+      const store = makeStore();
+      store.setState('user.name', 'ab');
+      let arg: PathOf<AppState> | ReadonlyArray<PathOf<AppState>> = 'user.name';
+
+      const { result, rerender } = renderHook(() => useStoreDynamic(arg), { wrapper: makeWrapper(store) });
+      expect(result.current[0]).toBe('ab');
+
+      arg = ['tags.0', 'tags.1'] as unknown as ReadonlyArray<PathOf<AppState>>;
+      rerender();
+
+      expect(result.current[0]).toEqual(['a', 'b']);
+      expect(Array.isArray(result.current[0])).toBe(true);
+    });
+  });
+
+  describe('useStore: mount mode', () => {
+    it('follows no change, and reads the current value whenever it renders again', () => {
+      const store = makeStore();
+      const renderFn = vi.fn();
+
+      const { result, rerender } = renderHook(
+        () => {
+          renderFn();
+
+          return useStore('count', { mode: 'mount' });
+        },
+        { wrapper: makeWrapper(store) }
+      );
+
+      act(() => store.setState('count', 5));
+      expect(renderFn).toHaveBeenCalledTimes(1);
+      expect(result.current[0]).toBe(0);
+
+      rerender();
+      expect(result.current[0]).toBe(5);
+    });
+  });
+
   describe('useStore: dynamic paths', () => {
     it('reads the correct value for a dynamic path', () => {
       const store = makeStore();
