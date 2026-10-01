@@ -1,5 +1,19 @@
 # @plitzi/nexus
 
+## 1.4.0
+
+### Changed
+
+- **Two copies of nexus on one page share their contexts.** An app and a plugin it loads at run time, built apart, each
+  carry nexus. Each made its own React contexts, so a store the app provided was invisible to the plugin's
+  `useStore`: the hook read the nearest provider of its own copy, or none at all. In Plitzi's builder, a remote plugin
+  on the canvas read the store of the page hosting the builder instead of the canvas's.
+  - `StoreContext`, `StoreRegistryContext`, `StoreMiddlewareContext` and `DevStoreScopeContext` are now made once per
+    page and handed to every copy, under `Symbol.for('@plitzi/nexus.contexts.v1')`.
+  - A provider from any copy is seen by a hook from any copy, and the nearest one wins as before.
+  - Nothing changes for an app with one copy.
+  - Covered by `src/react/sharedContext.test.tsx`.
+
 ## 1.3.1
 
 ### Changed

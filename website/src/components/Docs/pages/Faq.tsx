@@ -12,6 +12,14 @@ const Faq = () => (
       ) needs no provider at all.
     </p>
 
+    <h2>A plugin built apart doesn’t see my StoreProvider.</h2>
+    <p>
+      It does from 1.4.0. When an app and a plugin it loads at run time each carry their own copy of nexus, the copies
+      share one set of contexts per page, so the plugin’s <code>useStore</code> reads the app’s nearest provider. On an
+      older version each copy made its own context, and the plugin read no provider, or only one of its own. Upgrade
+      both bundles.
+    </p>
+
     <h2>Why isn’t my component re-rendering?</h2>
     <ul>
       <li>

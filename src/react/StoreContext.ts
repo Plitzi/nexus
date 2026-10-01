@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { createContext } from 'react';
+import { sharedContext } from './sharedContext';
 
 import type { StoreApi } from '../types';
 
-const StoreContext = createContext<StoreApi<any> | undefined>(undefined);
-StoreContext.displayName = 'StoreContext';
+const StoreContext = sharedContext<StoreApi<any> | undefined>('StoreContext', undefined);
 
 // A registry of the named (`id`) stores reachable from a point in the tree, as a linked list of `{ id, store }` nodes
 // pointing at the enclosing registry. It is propagated by `StoreProvider` independently of `inherit`, so a child can
@@ -17,8 +16,7 @@ export type StoreRegistry = {
   readonly parent: StoreRegistry | undefined;
 };
 
-const StoreRegistryContext = createContext<StoreRegistry | undefined>(undefined);
-StoreRegistryContext.displayName = 'StoreRegistryContext';
+const StoreRegistryContext = sharedContext<StoreRegistry | undefined>('StoreRegistryContext', undefined);
 
 // Resolves the nearest store registered under `id`, walking outward through enclosing providers.
 const findStoreInRegistry = (registry: StoreRegistry | undefined, id: string): StoreApi<any> | undefined => {

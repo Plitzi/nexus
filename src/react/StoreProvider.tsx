@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { createContext, useContext, useEffect, useMemo, useRef } from 'react';
+import { useContext, useEffect, useMemo, useRef } from 'react';
 
 import createStore from '../createStore';
+import { sharedContext } from './sharedContext';
 import { registerDevStore } from '../devStoreRegistry';
 import { isDev } from '../env';
 import { isServerSnapshot, stripServerFlag } from '../rsc';
@@ -17,7 +18,7 @@ import type { ReactNode } from 'react';
 
 // Middlewares marked with `cascade()` flow down to nested providers through this context, so a logger set once at the
 // root is inherited by every child store instead of being repeated in each provider.
-const StoreMiddlewareContext = createContext<StoreMiddleware<any>[] | undefined>(undefined);
+const StoreMiddlewareContext = sharedContext<StoreMiddleware<any>[] | undefined>('StoreMiddlewareContext', undefined);
 
 const cascades = (middleware: StoreMiddleware<any>): boolean => (middleware as { cascade?: boolean }).cascade === true;
 

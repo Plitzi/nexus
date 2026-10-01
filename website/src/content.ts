@@ -145,6 +145,13 @@ export const FEATURES: Feature[] = [
       'Name a provider with id and any descendant can target it — useStore(path, { storeId }), useStoreById(id), or store.id — even across a disconnected provider that would otherwise shadow it. Context-scoped registry, no globals to clean up.'
   },
   {
+    icon: '🧩',
+    group: 'Composition & scale',
+    title: 'One store across bundles',
+    description:
+      'An app and a plugin built apart each carry nexus — and still share stores. Its contexts are made once per page and handed to every copy, so a remote plugin’s useStore reads the app’s nearest provider.'
+  },
+  {
     icon: '🧮',
     group: 'Composition & scale',
     title: 'Derived & computed values',

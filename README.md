@@ -182,6 +182,28 @@ Wraps children with a store context. Creates a new store by default; pass `store
 > **`name`** is a human label of where the store comes from, shown by the devtools store picker (see
 > [DevTools integration](#devtools-integration)). Purely cosmetic — stripped from production.
 
+## Several copies on one page
+
+An app and a plugin it loads at run time are often built apart, and each bundle then carries its own copy of nexus.
+Their providers still reach each other's hooks. `StoreContext`, `StoreRegistryContext`, `StoreMiddlewareContext` and
+`DevStoreScopeContext` are made once per page, by the first copy that loads, and handed to every other one (under
+`Symbol.for('@plitzi/nexus.contexts.v1')`). So a plugin's `useStore` reads the app's nearest `StoreProvider`, exactly
+as if both had imported the same module.
+
+```tsx
+// app bundle
+<StoreProvider value={{ theme: 'dark' }}>
+  <RemotePlugin />  {/* loaded from another bundle, with its own copy of nexus */}
+</StoreProvider>
+
+// plugin bundle
+const [theme] = useStore('theme'); // 'dark' — the app's store
+```
+
+Nothing changes for an app with a single copy. The `v1` in the key is a promise: a release that changed what these
+contexts carry would take a new key, so copies on either side of it would keep to themselves instead of misreading
+each other. Since 1.4.0.
+
 ## Scoped stores (live scope chain)
 
 A store can have a `parent`. Reads resolve through the chain and writes target the owning scope. This

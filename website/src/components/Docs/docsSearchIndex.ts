@@ -121,7 +121,7 @@ export const DOCS_SEARCH_INDEX: DocSearchEntry[] = [
     slug: 'faq',
     label: 'FAQ & Troubleshooting',
     keywords: [
-      'faq', 'troubleshooting', 're-render', 'not updating', 'StoreProvider',
+      'faq', 'troubleshooting', 'plugin', 'bundle', 'micro-frontend', 'multiple copies', 'shared context', 're-render', 'not updating', 'StoreProvider',
       'getState vs getPath', 'batch updates', 'history empty', 'Redux DevTools',
       'scoped store', 'SSR', 'TypeScript', 'performance', 'CSP', 'new Function',
       'setCodegenEnabled', 'recursive fallback', 'no re-render'

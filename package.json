@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/nexus",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "license": "Apache-2.0",
   "files": [
     "dist",
@@ -345,6 +345,11 @@
       "types": "./dist/react/hooks/useStoreSync.d.ts",
       "import": "./dist/react/hooks/useStoreSync.mjs",
       "default": "./dist/react/hooks/useStoreSync.mjs"
+    },
+    "./react/sharedContext": {
+      "types": "./dist/react/sharedContext.d.ts",
+      "import": "./dist/react/sharedContext.mjs",
+      "default": "./dist/react/sharedContext.mjs"
     },
     "./react/useIsomorphicLayoutEffect": {
       "types": "./dist/react/useIsomorphicLayoutEffect.d.ts",
