@@ -14,7 +14,7 @@ type State = {
 
 const createTestStore = () =>
   createStore<State>({
-    user: { profile: { name: 'Carlos', email: 'c@plitzi.com' } },
+    user: { profile: { name: 'Ana', email: 'ana@example.com' } },
     count: 0
   });
 
@@ -24,7 +24,7 @@ describe('get/set/watch facade', () => {
       const store = createTestStore();
 
       expect(store.get()).toEqual({
-        user: { profile: { name: 'Carlos', email: 'c@plitzi.com' } },
+        user: { profile: { name: 'Ana', email: 'ana@example.com' } },
         count: 0
       });
     });
@@ -32,7 +32,7 @@ describe('get/set/watch facade', () => {
     it('resolves a single path', () => {
       const store = createTestStore();
 
-      expect(store.get('user.profile.name')).toBe('Carlos');
+      expect(store.get('user.profile.name')).toBe('Ana');
       expect(store.get('count')).toBe(0);
     });
 
@@ -120,7 +120,7 @@ describe('get/set/watch facade', () => {
       const store = createTestStore();
       const profile = store.withBase('user.profile');
 
-      expect(profile.get()).toEqual({ name: 'Carlos', email: 'c@plitzi.com' });
+      expect(profile.get()).toEqual({ name: 'Ana', email: 'ana@example.com' });
     });
   });
 });

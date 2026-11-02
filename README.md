@@ -46,9 +46,9 @@ Outside React, a store speaks three words. `get`, `set` and `watch` are typed ag
 ```ts
 import { createStore } from '@plitzi/nexus';
 
-const store = createStore<State>({ count: 0, user: { name: 'Carlos' } });
+const store = createStore<State>({ count: 0, user: { name: 'Ana' } });
 
-store.get('user.name');                 // 'Carlos'  (one path, no full merge)
+store.get('user.name');                 // 'Ana'  (one path, no full merge)
 store.get();                            // entire state
 store.set('user.name', 'Ada');          // typed dot-path write
 store.set('count', n => n + 1);         // updater form

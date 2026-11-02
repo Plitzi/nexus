@@ -1,6 +1,6 @@
 # Nexus → Framework-Agnostic Core: Migration Plan
 
-> Status: **Implemented** (2026-06-22) · Owner: Carlos · Target package: `@plitzi/nexus`
+> Status: **Implemented** (2026-06-22) · Target package: `@plitzi/nexus`
 >
 > **Final shape (revised from the original plan below):** the **package root IS the agnostic core** — no separate
 > `core/` folder, no `/core` subpath. React bindings live physically in `src/react/` (`@plitzi/nexus/react`), Next.js

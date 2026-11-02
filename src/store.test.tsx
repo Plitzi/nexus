@@ -26,7 +26,7 @@ type State = {
 describe('store', () => {
   const createTestStore = () =>
     createStore<State>((/* set, get */) => ({
-      user: { name: 'Carlos', age: 30 },
+      user: { name: 'Ana', age: 30 },
       count: 0
     }));
 
@@ -35,7 +35,7 @@ describe('store', () => {
       const store = createTestStore();
       const state = store.getState();
 
-      expect(state.user.name).toBe('Carlos');
+      expect(state.user.name).toBe('Ana');
       expect(state.count).toBe(0);
     });
   });
@@ -84,7 +84,7 @@ describe('store', () => {
 
       store.setState('user.name', 'Luis');
 
-      expect(prev.user.name).toBe('Carlos'); // immutability
+      expect(prev.user.name).toBe('Ana'); // immutability
     });
   });
 
@@ -1751,7 +1751,7 @@ describe('fiability', () => {
         },
         tags: ['a', 'b', 'c']
       },
-      meta: { author: 'Carlos', updatedAt: 1000 },
+      meta: { author: 'Ana', updatedAt: 1000 },
       counters: { views: 0, clicks: 0 }
     }));
 
@@ -2107,7 +2107,7 @@ describe('useStore (multi-path)', () => {
 
   const makeStore = () =>
     createStore<State>(() => ({
-      user: { name: 'Carlos', age: 30 },
+      user: { name: 'Ana', age: 30 },
       meta: { active: true },
       items: ['a', 'b'],
       count: 0
@@ -2127,7 +2127,7 @@ describe('useStore (multi-path)', () => {
       wrapper: makeWrapper(store)
     });
 
-    expect(result.current[0]).toEqual(['Carlos', 0]);
+    expect(result.current[0]).toEqual(['Ana', 0]);
   });
 
   it('returns values for multiple paths with invalid paths', () => {
@@ -2139,7 +2139,7 @@ describe('useStore (multi-path)', () => {
       { wrapper: makeWrapper(store) }
     );
 
-    expect(result.current[0]).toEqual(['Carlos', 0, undefined]);
+    expect(result.current[0]).toEqual(['Ana', 0, undefined]);
   });
 
   it('re-renders when one path changes', () => {

@@ -7,7 +7,7 @@ Code, OpenCode, Codex…); `CLAUDE.md` only imports it. The public API is docume
 
 ## Where this repo sits
 
-Plitzi is five repos under `/Users/Carlos/htdocs/`; the map is in `plitzi-workspace/AGENTS.md` § What Plitzi is.
+Plitzi is five repos, siblings in one parent folder; the map is in `plitzi-workspace/AGENTS.md` § What Plitzi is.
 nexus is consumed by `plitzi-workspace` (apps/sdk, apps/builder, sdk-shared, sdk-elements, sdk-dev-tools, sdk-auth)
 and by `plitzi-sdk-server`, from npm — or, while an unpublished change is tried, through a Yarn `portal:../nexus` in
 their `resolutions` (check, never assume). With a portal they read this repo's `dist`, so rebuild after any change.
@@ -16,7 +16,7 @@ their `resolutions` (check, never assume). With a portal they read this repo's `
 
 Owned by `plitzi-workspace/AGENTS.md` § How we work (read it when you can); in a line each:
 
-- Talk to Carlos in **Spanish**; code, comments, docs and commits in **English**. Report failures and skipped steps
+- Talk to the maintainer in **Spanish**; code, comments, docs and commits in **English**. Report failures and skipped steps
   as they are.
 - **Quality and zero tech debt first**; type-safe (no `any`/`as` without a reason in a comment); **one source of
   truth**; no legacy shims unless asked.
@@ -25,7 +25,7 @@ Owned by `plitzi-workspace/AGENTS.md` § How we work (read it when you can); in 
   in the consumer.
 - Shared working tree: never `git stash`/`checkout --`/`restore`/`reset --hard`/`clean`; temp scripts outside the
   repo. **Confirm before deleting** anything not agreed — every export is public API.
-- Commit/push/publish only when asked; **Carlos publishes**. No sub-agents unless he authorizes them.
+- Commit/push/publish only when asked; **the maintainer publishes**. No sub-agents unless the maintainer authorizes them.
 
 ## Commands
 
