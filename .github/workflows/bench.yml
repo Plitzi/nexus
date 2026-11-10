@@ -68,16 +68,13 @@ jobs:
             --head "$RUNNER_TEMP"/head-1.json "$RUNNER_TEMP"/head-2.json "$RUNNER_TEMP"/head-3.json
 
       # What a consumer loads per public entry, compressed, on the change and its base: built from each side's own
-      # install (the root's, which reads the @plitzi scope with the token, as ci.yml does) and measured by the head's
-      # script on both — a base from before it has its dist all the same.
+      # install and measured by the head's script on both — a base from before it has its dist all the same.
       - name: Build both sides
         run: |
           corepack enable
           for side in base head; do
             (
               cd "$side"
-              yarn config set 'npmScopes["plitzi"]["npmRegistryServer"]' "https://npm.pkg.github.com/"
-              yarn config set 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets.NPM_AUTH_TOKEN }}"
               yarn install --immutable
               yarn build:prod
             )
