@@ -84,6 +84,19 @@ function SearchBox() {
 }`}
       demoId="fetch-race"
     />
+    <p>
+      To cut the superseded request itself rather than ignore its answer, pass <code>{'{ abortable: true }'}</code>: the
+      fetcher then receives an <code>AbortSignal</code> first, aborted the moment a newer <code>run</code> supersedes
+      it or the resource is destroyed. Without the option no <code>AbortController</code> is made.
+    </p>
+    <CodeBlock
+      code={`const searchResource = createAsync(
+  store,
+  'search.results',
+  (signal, q: string) => fetch(\`/api/search?q=\${q}\`, { signal }).then(r => r.json()),
+  { abortable: true }
+);`}
+    />
 
     <h2 id="dependent-queries">Dependent queries</h2>
     <p>

@@ -33,6 +33,11 @@ export type PersistOptions<TState extends object> = MiddlewareOptions<TState> & 
   // at that moment. Without it the stored value replaces the path whole, so a key the app has added since — a new
   // default — is gone after the first restore of an older entry, and so is anything written before the restore.
   mergePath?: (path: PathOf<TState>, persisted: unknown, current: unknown, state: TState) => unknown;
+  // When the storage is written: after `each` change (the default), or once a `tick` — every change of one synchronous
+  // run gathered into one `setItem`, written in a microtask, before the page can be hidden (`pagehide`) and when the
+  // store is destroyed. It only removes work, but it moves when storage is written, so it is asked for. A write that
+  // fails then (a full quota) is reported to the store's `onError` once, until one succeeds.
+  writes?: 'each' | 'tick';
 };
 
 const resolveStorage = (target: PersistTarget = 'local'): PersistStorage | undefined => {
@@ -64,6 +69,7 @@ export const persistMiddleware = <TState extends object>(options: PersistOptions
     migrate,
     merge,
     mergePath,
+    writes = 'each',
     enabled
   } = options;
   const dynamicTarget = typeof target === 'function' ? target : undefined;
@@ -114,12 +120,45 @@ export const persistMiddleware = <TState extends object>(options: PersistOptions
   const affectsPersisted = (changedPath: PathOf<TState> | undefined): boolean =>
     !paths || paths.some(path => isPathAffected(changedPath, path));
 
-  return api => {
+  return (api, { reportError }) => {
     if (isDisabled(enabled, api.getState())) {
       return;
     }
 
     let hydrated = false;
+    /** A gathered write waits for its microtask; `failing` keeps a storage that refuses from being reported per tick. */
+    let pending = false;
+    let failing = false;
+    // The page whose hiding flushes a gathered write — none on a server, where nothing is hidden.
+    const page = typeof window === 'undefined' ? undefined : window;
+    const flush = (): void => {
+      if (!pending) {
+        return;
+      }
+
+      pending = false;
+      page?.removeEventListener('pagehide', flush);
+      try {
+        write(api);
+        failing = false;
+      } catch (error) {
+        if (!failing) {
+          failing = true;
+          reportError(error);
+        }
+      }
+    };
+    const gather = (): void => {
+      if (pending) {
+        return;
+      }
+
+      pending = true;
+      // Listened to only while a write waits: a page hidden in the same task loses nothing, and no store that is gone
+      // is held by the window.
+      page?.addEventListener('pagehide', flush);
+      queueMicrotask(flush);
+    };
 
     // Restore once a storage is resolvable. A dynamic `storage` can be unavailable at mount (a setting that picks or
     // gates it loads after the store), so `onChange` — which runs after each commit — retries until it can. Restoring
@@ -146,9 +185,14 @@ export const persistMiddleware = <TState extends object>(options: PersistOptions
         restore();
 
         if (affectsPersisted(change.path)) {
-          write(api);
+          if (writes === 'tick') {
+            gather();
+          } else {
+            write(api);
+          }
         }
-      }
+      },
+      ...(writes === 'tick' ? { onDestroy: flush } : {})
     };
   };
 };

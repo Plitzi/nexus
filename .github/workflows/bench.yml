@@ -1,6 +1,7 @@
 # nexus is the hot path of every page, the builder and the dev tools: no change may cost it speed (AGENTS.md § Rules).
 # This holds it: the benchmark of nexus's own cases on the change and on its base, on the same runner, in turns, and
-# the job fails when a case is slower than its base past its tolerance (`website/src/components/Benchmark/bench`).
+# the job fails when a case is slower than its base past its tolerance (`website/src/components/Benchmark/bench`) —
+# or when a public entry grows past its size's (`scripts/entrySizes*.mjs`, `scripts/entrySizes.tolerances.json`).
 
 name: bench
 
@@ -65,3 +66,25 @@ jobs:
           npm run -s bench:compare -- \
             --base "$RUNNER_TEMP"/base-1.json "$RUNNER_TEMP"/base-2.json "$RUNNER_TEMP"/base-3.json \
             --head "$RUNNER_TEMP"/head-1.json "$RUNNER_TEMP"/head-2.json "$RUNNER_TEMP"/head-3.json
+
+      # What a consumer loads per public entry, compressed, on the change and its base: built from each side's own
+      # install (the root's, which reads the @plitzi scope with the token, as ci.yml does) and measured by the head's
+      # script on both — a base from before it has its dist all the same.
+      - name: Build both sides
+        run: |
+          corepack enable
+          for side in base head; do
+            (
+              cd "$side"
+              yarn config set 'npmScopes["plitzi"]["npmRegistryServer"]' "https://npm.pkg.github.com/"
+              yarn config set 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets.NPM_AUTH_TOKEN }}"
+              yarn install --immutable
+              yarn build:prod
+            )
+          done
+
+      - name: Entry sizes
+        run: |
+          (cd base && node ../head/scripts/entrySizes.mjs "$RUNNER_TEMP/sizes-base.json")
+          (cd head && node scripts/entrySizes.mjs "$RUNNER_TEMP/sizes-head.json")
+          node head/scripts/entrySizesCompare.mjs "$RUNNER_TEMP/sizes-base.json" "$RUNNER_TEMP/sizes-head.json"

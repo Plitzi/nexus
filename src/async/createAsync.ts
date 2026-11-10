@@ -29,6 +29,14 @@ export type AsyncOptions<Args extends readonly unknown[]> = {
   // Fire `run(...immediate)` as soon as the resource is created — the usual setup for Suspense, so a component that
   // reads it suspends on the in-flight request instead of seeing an idle resource.
   immediate?: Args;
+  // Hand the fetcher an `AbortSignal`, first, aborted when a newer `run` supersedes its call or the resource is
+  // destroyed: the superseded request can be cut (`fetch(url, { signal })`), not only its answer ignored. Off, no
+  // controller is made.
+  abortable?: false;
+};
+
+export type AbortableAsyncOptions<Args extends readonly unknown[]> = Omit<AsyncOptions<Args>, 'abortable'> & {
+  abortable: true;
 };
 
 // Binds an async request to a store path: the resolved value lands in the store (so path subscriptions, derived
@@ -37,8 +45,24 @@ export type AsyncOptions<Args extends readonly unknown[]> = {
 export function createAsync<TState extends object, P extends PathOf<TState>, Args extends readonly unknown[]>(
   store: StoreApi<TState>,
   path: P,
+  fetcher: (signal: AbortSignal, ...args: Args) => Promise<PathValue<TState, P>>,
+  options: AbortableAsyncOptions<Args>
+): AsyncResource<PathValue<TState, P>, Args>;
+
+export function createAsync<TState extends object, P extends PathOf<TState>, Args extends readonly unknown[]>(
+  store: StoreApi<TState>,
+  path: P,
   fetcher: (...args: Args) => Promise<PathValue<TState, P>>,
-  options: AsyncOptions<Args> = {}
+  options?: AsyncOptions<Args>
+): AsyncResource<PathValue<TState, P>, Args>;
+
+export function createAsync<TState extends object, P extends PathOf<TState>, Args extends readonly unknown[]>(
+  store: StoreApi<TState>,
+  path: P,
+  fetcher:
+    | ((...args: Args) => Promise<PathValue<TState, P>>)
+    | ((signal: AbortSignal, ...args: Args) => Promise<PathValue<TState, P>>),
+  options: AsyncOptions<Args> | AbortableAsyncOptions<Args> = {}
 ): AsyncResource<PathValue<TState, P>, Args> {
   type T = PathValue<TState, P>;
 
@@ -46,6 +70,16 @@ export function createAsync<TState extends object, P extends PathOf<TState>, Arg
   let error: unknown;
   let current: Promise<T> | undefined;
   let settled: Promise<void> | undefined;
+  /** The controller of the call in flight, when the fetcher asked for a signal. */
+  let controller: AbortController | undefined;
+  const abortable = options.abortable === true;
+
+  // Which of the two the fetcher is was decided by the option the overloads typed it with; a function union cannot be
+  // narrowed by a value beside it, so each side is named here once, as the overload promised it.
+  const call = (signal: AbortSignal | undefined, args: Args): Promise<T> =>
+    signal
+      ? (fetcher as (signal: AbortSignal, ...rest: Args) => Promise<T>)(signal, ...args)
+      : (fetcher as (...rest: Args) => Promise<T>)(...args);
 
   // The snapshot is rebuilt only when invalidated (a status change or a store write to the path), so `get` returns a
   // stable reference between changes and can back `useSyncExternalStore` directly.
@@ -66,8 +100,12 @@ export function createAsync<TState extends object, P extends PathOf<TState>, Arg
   const run = (...args: Args): Promise<T> => {
     status = 'pending';
     error = undefined;
+    // Superseded the moment it is: the request in flight is cut, not only its answer ignored.
+    controller?.abort();
+    const own = abortable ? new AbortController() : undefined;
+    controller = own;
 
-    const promise = Promise.resolve().then(() => fetcher(...args));
+    const promise = Promise.resolve().then(() => call(own?.signal, args));
     current = promise;
     settled = promise.then(
       () => undefined,
@@ -77,6 +115,11 @@ export function createAsync<TState extends object, P extends PathOf<TState>, Arg
 
     return promise.then(
       data => {
+        // Settled, its controller is let go: a call that finished is never told it was aborted.
+        if (own && controller === own) {
+          controller = undefined;
+        }
+
         if (promise === current) {
           current = undefined;
           settled = undefined;
@@ -94,6 +137,10 @@ export function createAsync<TState extends object, P extends PathOf<TState>, Arg
         return data;
       },
       (caught: unknown) => {
+        if (own && controller === own) {
+          controller = undefined;
+        }
+
         if (promise === current) {
           current = undefined;
           settled = undefined;
@@ -121,6 +168,7 @@ export function createAsync<TState extends object, P extends PathOf<TState>, Arg
     subscribe: observable.subscribe,
     suspend: () => settled,
     destroy: () => {
+      controller?.abort();
       unsubscribePath();
       observable.destroy();
     }

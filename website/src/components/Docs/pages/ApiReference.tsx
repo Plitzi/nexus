@@ -485,8 +485,9 @@ useDerived(derived) // reactive, re-renders only when the result changes`}
     <h2 id="async-suspense">Async &amp; Suspense</h2>
     <GuideLink anchor="async" label="Async data" />
     <CodeBlock
-      code={`createAsync(store, path, fetcher, { immediate? })
+      code={`createAsync(store, path, fetcher, { immediate?, abortable? })
   → { get, run, subscribe, suspend, destroy }
+// abortable: true → fetcher(signal, ...args), the signal aborted when a newer run supersedes it
 
 useAsync(resource)       // { status, data, error, run } — inline loading/error UI
 useAsyncValue(resource)  // Suspense: throws the promise / error, returns data`}
@@ -572,7 +573,8 @@ const off = items.subscribeOne(id, listener);`}
             <code>persistMiddleware(opts)</code>
           </td>
           <td>
-            Mirror to storage + rehydrate. <code>key, storage, partialize, version, migrate, merge</code>. With{' '}
+            Mirror to storage + rehydrate. <code>key, storage, partialize, version, migrate, merge, writes</code>{' '}
+            (<code>'tick'</code> gathers a synchronous run&rsquo;s changes into one write). With{' '}
             <code>paths</code>, each subtree is written and restored at its own location, shaped by{' '}
             <code>partializePath</code> (what is written) and <code>mergePath</code> (what the stored value becomes,
             given the value the path holds now).

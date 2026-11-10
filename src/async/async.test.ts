@@ -184,3 +184,101 @@ describe('createAsync', () => {
     expect(notifications[0]).toEqual({ status: 'success', data: 42 });
   });
 });
+
+describe('createAsync, abortable', () => {
+  it('hands the fetcher a signal, first, and the run its arguments after it', async () => {
+    const store = createStore<State>(initial());
+    let given: AbortSignal | undefined;
+    const resource = createAsync(
+      store,
+      'value',
+      (signal, n: number) => {
+        given = signal;
+
+        return Promise.resolve(n * 2);
+      },
+      { abortable: true }
+    );
+
+    expect(await resource.run(4)).toBe(8);
+    expect(given).toBeInstanceOf(AbortSignal);
+    expect(given?.aborted).toBe(false);
+  });
+
+  it('aborts the call a newer run supersedes, the moment it does, and never one that finished', async () => {
+    const store = createStore<State>(initial());
+    const signals: AbortSignal[] = [];
+    const pending: ReturnType<typeof deferred<number>>[] = [];
+    const resource = createAsync(
+      store,
+      'value',
+      signal => {
+        signals.push(signal);
+        const call = deferred<number>();
+        pending.push(call);
+
+        return call.promise;
+      },
+      { abortable: true }
+    );
+
+    const first = resource.run();
+    await Promise.resolve();
+    const second = resource.run();
+
+    expect(signals[0].aborted).toBe(true);
+    await Promise.resolve();
+    pending[1].resolve(2);
+    await second;
+    pending[0].resolve(1);
+    await first;
+
+    expect(store.getState().value).toBe(2);
+    expect(signals[1].aborted).toBe(false);
+    resource.run().catch(() => undefined);
+    expect(signals[1].aborted).toBe(false);
+  });
+
+  it('aborts the call in flight when the resource is destroyed', async () => {
+    const store = createStore<State>(initial());
+    let given: AbortSignal | undefined;
+    const resource = createAsync(
+      store,
+      'value',
+      signal => {
+        given = signal;
+
+        return new Promise<number>(() => undefined);
+      },
+      { abortable: true }
+    );
+
+    void resource.run();
+    await Promise.resolve();
+    resource.destroy();
+
+    expect(given?.aborted).toBe(true);
+  });
+
+  it('makes no controller when the option is off', async () => {
+    const store = createStore<State>(initial());
+    const made = { count: 0 };
+    const Native = globalThis.AbortController;
+    globalThis.AbortController = class extends Native {
+      constructor() {
+        super();
+        made.count++;
+      }
+    };
+
+    try {
+      const resource = createAsync(store, 'value', (...args: unknown[]) => Promise.resolve(args.length));
+      await resource.run();
+      await resource.run();
+
+      expect(made.count).toBe(0);
+    } finally {
+      globalThis.AbortController = Native;
+    }
+  });
+});

@@ -16,6 +16,7 @@ import type {
   FreshnessListener,
   GetState,
   Listener,
+  MiddlewareContext,
   PathOf,
   SetState,
   SetStateOptions,
@@ -78,6 +79,8 @@ function createStore<TState extends object>(
   const interceptors: WriteInterceptor<TState>[] = [];
   const errorHandlers: StoreErrorHandler<TState>[] = [];
   const hydrateHandlers: Array<() => void> = [];
+  // Middlewares' `onDestroy`, run by `destroy()`: what one put off — a gathered write — is done before the store goes.
+  const destroyHandlers: Array<() => void> = [];
   const parent = storeOptions?.parent;
   const scopeId = ++scopeIdSeq;
 
@@ -253,6 +256,10 @@ function createStore<TState extends object>(
   };
 
   const destroy = () => {
+    for (let i = 0, n = destroyHandlers.length; i < n; i++) {
+      destroyHandlers[i]();
+    }
+
     destroyed = true;
     detach();
     listeners.clear();
@@ -372,8 +379,9 @@ function createStore<TState extends object>(
   // Middlewares (logger, persist, history, custom) all ride the one `subscribeChange` substrate. Their setup runs
   // once here, after the store exists, so a middleware body can hydrate via `api.setState`.
   if (storeOptions?.middlewares) {
+    const context: MiddlewareContext<TState> = { reportError: (error, path) => reportError(error, 'onChange', path) };
     for (const middleware of storeOptions.middlewares) {
-      const handlers = middleware(api);
+      const handlers = middleware(api, context);
       // A middleware's `beforeChange` rides the same interceptor array `setState` consults before each commit, in
       // middleware order — each one sees the previous one's result (transform), or `CANCEL` to block the write.
       if (handlers?.beforeChange) {
@@ -386,6 +394,10 @@ function createStore<TState extends object>(
 
       if (handlers?.onError) {
         errorHandlers.push(handlers.onError);
+      }
+
+      if (handlers?.onDestroy) {
+        destroyHandlers.push(handlers.onDestroy);
       }
 
       // Hydrate handlers run inline during the middleware loop for standalone usage

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
+import { createGenerationalCache } from './generationalCache';
 import parsePath from './parsePath';
 
 import type { PathOf, PathValue } from '../types';
@@ -7,13 +8,12 @@ import type { PathOf, PathValue } from '../types';
 /**
  * One cached accessor closure per dotted path, so the split + loop happens once instead of on every read.
  *
- * Bounded, and once full it keeps what it has rather than evicting: a page reads its elements' paths in the same order
- * on every render, and a first-in-first-out cache smaller than that set evicted each path just before it was read
- * again — every read a miss plus the churn of evicting, measured slower than no cache at all. Past the bound a path is
- * resolved without being cached; 4096 holds a page of well over a thousand elements.
+ * Bounded by generations (`createGenerationalCache`), never first-in-first-out: a page reads its elements' paths in the
+ * same order on every render, and a FIFO smaller than that set evicted each path just before it was read again — every
+ * read a miss plus the churn of evicting, measured slower than no cache at all. What a page reads survives a swap; 4096
+ * holds a page of well over a thousand elements.
  */
-const cached = new Map<string, (obj: unknown) => unknown>();
-const MAX_CACHED = 4096;
+const cached = createGenerationalCache<(obj: unknown) => unknown>(4096);
 
 const makeAccessor = (keys: readonly string[]): ((obj: unknown) => unknown) => {
   if (keys.length === 1) {
@@ -43,9 +43,7 @@ const getAccessor = (path: string): ((obj: unknown) => unknown) => {
 
   if (!fn) {
     fn = makeAccessor(parsePath(path));
-    if (cached.size < MAX_CACHED) {
-      cached.set(path, fn);
-    }
+    cached.set(path, fn);
   }
 
   return fn;

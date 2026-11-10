@@ -60,6 +60,9 @@ cd website && npm run check:docs   # the website's code samples against the real
   `createStore/` and say the numbers. CI holds it too: `.github/workflows/bench.yml` measures nexus's cases on the
   change and its base in turns and fails past a case's tolerance (`website/src/components/Benchmark/bench/
   tolerances.json`, twice its measured noise) — tightened when a case steadies, never loosened to let a change through.
+  The same job builds both sides and holds each public entry's compressed size (`node scripts/entrySizes.mjs`, compared
+  by `scripts/entrySizesCompare.mjs`): past the larger of 5% and 512 B of gzip it fails — a module pulled into a barrel
+  by accident is kilobytes at once.
 - **The core's tests run in Node, the bindings' in jsdom** (`vite.config.ts`, two projects): a core test that needs
   `window` is named in `DOM_TESTS`, never the whole suite moved back.
 - **`getState()` never returns the live object.** Single-segment writes mutate in place because every snapshot is a

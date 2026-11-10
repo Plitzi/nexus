@@ -586,7 +586,7 @@ todos.getAll();                                 // Todo[]
 const off = todos.subscribeOne('a', render);    // wakes ONLY when item 'a' changes
 ```
 
-React — subscribe at the granularity you actually render at:
+React — subscribe at the granularity you actually render at. The store itself carries no hooks (it is core, and the core has no React): read it with `useEntity*` from `@plitzi/nexus/react`.
 
 ```tsx
 import { useEntity, useEntityIds, useEntityOne } from '@plitzi/nexus/react';
@@ -614,7 +614,13 @@ import { createAsync } from '@plitzi/nexus';
 const user = createAsync(store, 'user', async (id: string) => fetchUser(id));
 user.run('42');                                 // kicks off; a newer run() supersedes an in-flight one
 user.get();                                     // { status, data, error }
+
+// abortable: the fetcher gets a signal first, aborted when a newer run() supersedes the call or destroy() is called
+const search = createAsync(store, 'results', (signal, q: string) => fetchResults(q, { signal }), { abortable: true });
 ```
+
+Without `abortable`, a superseded call runs to its end and its answer is ignored; with it, the request itself is cut.
+No `AbortController` is made when the option is off.
 
 ```tsx
 import { useAsync, useAsyncValue } from '@plitzi/nexus/react';
@@ -636,7 +642,7 @@ function ProfileSuspense() {
 
 ## Middleware (`loggerMiddleware` / `persistMiddleware` / `historyMiddleware`)
 
-**What it's for:** cross-cutting logic on every write, centralized in one place. A middleware is `(api) => { beforeChange?, onChange? } | void`; its setup body runs once after creation (so it can hydrate). It can do two things: **intercept** a write before it commits (`beforeChange`) and **observe** a write after it commits (`onChange`, the `{ path, prev, next }` change). logger, persist, and history are built-in observers; write your own the same way. Middlewares are per-store — in a scope chain, attach them where the writes you care about commit (shared keys delegate to the owning scope, so the owning scope's interceptors run).
+**What it's for:** cross-cutting logic on every write, centralized in one place. A middleware is `(api, { reportError }) => { beforeChange?, onChange?, onError?, hydrate?, onDestroy? } | void`; its setup body runs once after creation (so it can hydrate). `onDestroy` runs when the store is destroyed, and `reportError` routes a failure of work the middleware does after a write returned (a write it gathered) to the store's `onError`. It can do two things: **intercept** a write before it commits (`beforeChange`) and **observe** a write after it commits (`onChange`, the `{ path, prev, next }` change). logger, persist, and history are built-in observers; write your own the same way. Middlewares are per-store — in a scope chain, attach them where the writes you care about commit (shared keys delegate to the owning scope, so the owning scope's interceptors run).
 
 ```ts
 import { createStore, loggerMiddleware, persistMiddleware, historyMiddleware } from '@plitzi/nexus';
@@ -715,9 +721,14 @@ persistMiddleware<State>({
   version: 2,                           // bump when the shape changes…
   migrate: (old, v) => ({ user: old }), // …and map an older payload forward
   merge: (persisted, current) => ({ ...current, ...persisted }),
-  debounce: 200                         // coalesce rapid writes (ms); 0 = write synchronously
+  writes: 'tick'                        // one setItem for every change of a synchronous run; default 'each'
 });
 ```
+
+`writes: 'tick'` gathers the changes of one synchronous run into a single write, made in a microtask — before the page
+can be hidden (`pagehide`) and when the store is destroyed, so nothing is lost. A write that fails then (a full quota)
+reaches the store's `onError` once, until one succeeds. It is off by default because it moves *when* storage is
+written: with `'each'`, storage holds every change the moment `setState` returns.
 
 ### `loggerMiddleware`
 

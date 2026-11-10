@@ -127,11 +127,23 @@ export type StoreMiddlewareHandlers<T> = {
   // Runs after React hydration (client-side) to restore persisted state. In SSR this is deferred and never runs,
   // preventing hydration mismatches. For standalone (non-Provider) usage, it runs synchronously during createStore.
   hydrate?: (api: StoreApi<T>) => void;
+  // Runs when the store is destroyed (`destroy()`): what the middleware put off is done now — a write it gathered.
+  onDestroy?: () => void;
+};
+
+// What a middleware is handed besides the store: how to report a failure of work it does after a write returned — a
+// write it gathered, flushed later — as the store reports its handlers' (`onError`, phase `onChange`), re-thrown when
+// none is registered so it is never lost.
+export type MiddlewareContext<T> = {
+  reportError: (error: unknown, path?: PathOf<T>) => void;
 };
 
 // Set up once after the store is created (the body may hydrate via `api.setState`). Returns the change handler to
 // register, or nothing for a pure side-effect middleware.
-export type StoreMiddleware<T extends object> = (api: StoreApi<T>) => StoreMiddlewareHandlers<T> | void;
+export type StoreMiddleware<T extends object> = (
+  api: StoreApi<T>,
+  context: MiddlewareContext<T>
+) => StoreMiddlewareHandlers<T> | void;
 
 // Shared base for every built-in middleware's options. `enabled` false (or a predicate that resolves false at setup)
 // skips the middleware entirely — no hydrate, no observers.

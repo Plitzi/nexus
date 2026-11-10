@@ -2,6 +2,8 @@
 // literal-key spreads V8 clones on its fast path; a recursive fallback covers environments where a strict CSP
 // blocks `new Function`. The codegen is injection-safe by construction — see `access`/`literalKey`.
 
+import { createGenerationalCache } from '../../helpers/generationalCache';
+
 export const UNCHANGED: unique symbol = Symbol('unchanged');
 
 type CompiledWriter = (root: unknown, value: unknown, isFn: boolean) => Record<string, unknown> | null;
@@ -117,8 +119,9 @@ export const setCodegenEnabled = (enabled: boolean | undefined): void => {
   codegenForced = enabled;
 };
 
-const cache = new Map<string, CompiledWriter>();
-const MAX_CACHED = 256;
+// The paths written lately, by generations (`createGenerationalCache`): a path written again survives a swap, where a
+// first-in-first-out cache dropped the oldest written however often it was used.
+const cache = createGenerationalCache<CompiledWriter>(256);
 
 const getCompiled = (path: string, segments: readonly string[]): CompiledWriter | undefined => {
   if (!isCodegenAvailable()) {
@@ -138,9 +141,6 @@ const getCompiled = (path: string, segments: readonly string[]): CompiledWriter 
   }
 
   const fn = compile(segments);
-  if (cache.size >= MAX_CACHED) {
-    cache.delete(cache.keys().next().value as string);
-  }
   cache.set(path, fn);
 
   return fn;

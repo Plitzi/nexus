@@ -540,3 +540,114 @@ describe('middleware ordering', () => {
     expect(seen).toEqual([5]);
   });
 });
+
+describe('persist middleware / writes gathered per tick', () => {
+  type Counter = { count: number; other: number };
+
+  /** A storage that counts its writes, and refuses them while `full` says so. */
+  const countingStorage = () => {
+    const data = new Map<string, string>();
+    const state = { writes: 0, full: false };
+    const storage: PersistStorage = {
+      getItem: key => data.get(key) ?? null,
+      setItem: (key, value) => {
+        if (state.full) {
+          throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+        }
+
+        state.writes++;
+        data.set(key, value);
+      },
+      removeItem: key => void data.delete(key)
+    };
+
+    return { storage, data, state };
+  };
+
+  const tick = () => new Promise<void>(resolve => queueMicrotask(resolve));
+
+  it('writes after each change by default', () => {
+    const { storage, state } = countingStorage();
+    const store = createStore<Counter>(
+      { count: 0, other: 0 },
+      { middlewares: [persistMiddleware({ key: 'k', storage })] }
+    );
+    for (let i = 1; i <= 5; i++) {
+      store.setState('count', i);
+    }
+
+    expect(state.writes).toBe(5);
+  });
+
+  it('makes one write of 1,000 changes in a tick, holding the last of them', async () => {
+    const { storage, data, state } = countingStorage();
+    const store = createStore<Counter>(
+      { count: 0, other: 0 },
+      { middlewares: [persistMiddleware({ key: 'k', storage, writes: 'tick' })] }
+    );
+    for (let i = 1; i <= 1000; i++) {
+      store.setState('count', i);
+    }
+
+    expect(state.writes).toBe(0);
+    await tick();
+
+    expect(state.writes).toBe(1);
+    expect(JSON.parse(data.get('k') ?? '{}')).toEqual({ version: 0, state: { count: 1000, other: 0 } });
+  });
+
+  it('loses nothing when the page is hidden before its tick', () => {
+    const { storage, data } = countingStorage();
+    const store = createStore<Counter>(
+      { count: 0, other: 0 },
+      { middlewares: [persistMiddleware({ key: 'k', storage, writes: 'tick' })] }
+    );
+    store.setState('count', 7);
+    window.dispatchEvent(new Event('pagehide'));
+
+    expect(JSON.parse(data.get('k') ?? '{}')).toMatchObject({ state: { count: 7 } });
+  });
+
+  it('writes what it gathered when the store is destroyed', () => {
+    const { storage, state } = countingStorage();
+    const store = createStore<Counter>(
+      { count: 0, other: 0 },
+      { middlewares: [persistMiddleware({ key: 'k', storage, writes: 'tick' })] }
+    );
+    store.setState('count', 3);
+    store.destroy?.();
+
+    expect(state.writes).toBe(1);
+  });
+
+  it('reports a storage that refuses to onError once, until a write succeeds', async () => {
+    const { storage, state } = countingStorage();
+    const failures: unknown[] = [];
+    const store = createStore<Counter>(
+      { count: 0, other: 0 },
+      {
+        middlewares: [
+          persistMiddleware({ key: 'k', storage, writes: 'tick' }),
+          () => ({ onError: failure => void failures.push(failure.error) })
+        ]
+      }
+    );
+    state.full = true;
+    store.setState('count', 1);
+    await tick();
+    store.setState('count', 2);
+    await tick();
+
+    expect(failures).toHaveLength(1);
+    expect(failures[0]).toMatchObject({ name: 'QuotaExceededError' });
+
+    state.full = false;
+    store.setState('count', 3);
+    await tick();
+    state.full = true;
+    store.setState('count', 4);
+    await tick();
+
+    expect(failures).toHaveLength(2);
+  });
+});

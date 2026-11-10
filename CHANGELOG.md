@@ -1,5 +1,41 @@
 # @plitzi/nexus
 
+## 1.5.0
+
+### Changed
+
+- **The path caches forget what is no longer read.** `parsePath` and `getByPath` kept their first 4,096 paths for
+  ever, and the compiled writers dropped the oldest written however often it was used: in a builder moving between
+  pages of thousands of elements, every path met after the first few pages was parsed on every read while paths
+  nobody read any more held the room.
+  - All three now keep two generations (`helpers/generationalCache.ts`). A hit is still one `Map.get`. A miss looks in
+    the older generation and moves what it finds back; when the young one fills, the old one is dropped.
+  - Reads that cycle over more paths than the cache holds would hit nothing that way. A generation that filled with
+    nothing read again from the one before stops the cache taking new entries for a while, and the two generations it
+    holds keep their share of the rotation.
+  - Measured in the benchmark gate's two new cases (`pathsMoving`, `pathsRotating`): 30% faster with the set of paths
+    in use moving, 14% faster on 10,000 paths read in rotation; every other case within its tolerance.
+  - Covered by `src/helpers/generationalCache.test.ts`.
+
+### Added
+
+- **`persistMiddleware({ writes: 'tick' })`: one write per burst.** Every change of one synchronous run is gathered
+  into a single `setItem`, made in a microtask — before the page can be hidden (`pagehide`) and when the store is
+  destroyed, so nothing is lost. 1,000 writes in a tick are one `setItem`. A write that fails then (a full quota)
+  reaches the store's `onError` once, until one succeeds. Off by default (`writes: 'each'`, as before): it moves when
+  storage is written.
+- **`createAsync(…, { abortable: true })`: a superseded call is cut, not only ignored.** The fetcher receives an
+  `AbortSignal` first, aborted the moment a newer `run` supersedes it or the resource is destroyed; a call that
+  already finished is never told. Without the option no `AbortController` is made and `run` allocates what it did.
+- **Middlewares get `onDestroy` and a context.** `StoreMiddlewareHandlers.onDestroy` runs when the store is
+  destroyed, and a middleware is called as `(api, { reportError })`: a failure of work it does after a write returned
+  goes to the store's `onError` (phase `onChange`), or is re-thrown when none is registered. A middleware written as
+  `(api) => …` is unchanged.
+
+### Fixed
+
+- The README documented a `debounce` option of `persistMiddleware` that never existed: it now documents `writes`.
+
 ## 1.4.0
 
 ### Changed
