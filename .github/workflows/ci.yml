@@ -24,8 +24,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: https://npm.pkg.github.com
-          scope: '@plitzi'
           cache: 'yarn'
 
       - name: Cache node_modules
@@ -53,8 +51,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: https://npm.pkg.github.com
-          scope: '@plitzi'
           cache: 'yarn'
 
       - name: Restore Cache node_modules
@@ -95,8 +91,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: https://npm.pkg.github.com
-          scope: '@plitzi'
           cache: 'yarn'
 
       - name: Restore Cache node_modules
@@ -138,8 +132,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: https://npm.pkg.github.com
-          scope: '@plitzi'
           cache: 'yarn'
 
       - name: Restore Cache node_modules
@@ -160,10 +152,6 @@ jobs:
     strategy:
       matrix:
         registry:
-          # - name: github
-          #   url: https://npm.pkg.github.com/
-          #   token: NPM_AUTH_TOKEN
-          #   scope: '@plitzi'
           - name: npm
             url: https://registry.npmjs.org/
             token: NPMJS_TOKEN
