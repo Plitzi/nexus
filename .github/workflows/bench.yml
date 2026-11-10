@@ -1,0 +1,67 @@
+# nexus is the hot path of every page, the builder and the dev tools: no change may cost it speed (AGENTS.md § Rules).
+# This holds it: the benchmark of nexus's own cases on the change and on its base, on the same runner, in turns, and
+# the job fails when a case is slower than its base past its tolerance (`website/src/components/Benchmark/bench`).
+
+name: bench
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: bench-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: head
+
+      # The base: what the pull request goes into, or what this push came after.
+      - uses: actions/checkout@v4
+        with:
+          path: base
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # A base from before the gate has nothing to measure itself with: said, and the gate starts on the next change.
+      - name: The base has the gate
+        id: gated
+        run: |
+          if [ -f base/website/src/components/Benchmark/bench/gate.ts ]; then
+            echo "yes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::The base predates the benchmark gate: nothing to compare with yet."
+          fi
+
+      # The website measures nexus from its source (`vite.config.ts` aliases it), so its own install is all a side needs.
+      - name: Install
+        if: steps.gated.outputs.yes == 'true'
+        run: |
+          (cd head/website && npm ci --no-audit --no-fund)
+          (cd base/website && npm ci --no-audit --no-fund)
+
+      # In turns, three of each: one slow moment of a shared runner lands on one turn, and the best of each is compared.
+      - name: Measure
+        if: steps.gated.outputs.yes == 'true'
+        run: |
+          for turn in 1 2 3; do
+            (cd base/website && npm run -s bench:gate -- "$RUNNER_TEMP/base-$turn.json")
+            (cd head/website && npm run -s bench:gate -- "$RUNNER_TEMP/head-$turn.json")
+          done
+
+      - name: Compare
+        if: steps.gated.outputs.yes == 'true'
+        working-directory: head/website
+        run: |
+          npm run -s bench:compare -- \
+            --base "$RUNNER_TEMP"/base-1.json "$RUNNER_TEMP"/base-2.json "$RUNNER_TEMP"/base-3.json \
+            --head "$RUNNER_TEMP"/head-1.json "$RUNNER_TEMP"/head-2.json "$RUNNER_TEMP"/head-3.json

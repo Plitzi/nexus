@@ -11,7 +11,9 @@
     "check:docs": "vite-node scripts/checkDocs.ts",
     "bench": "vite-node src/components/Benchmark/bench/cli.ts",
     "bench:nested": "vite-node src/components/Benchmark/bench/nestedCli.ts",
-    "bench:react": "vite-node src/components/Benchmark/bench/reactCli.ts"
+    "bench:react": "vite-node src/components/Benchmark/bench/reactCli.ts",
+    "bench:gate": "vite-node src/components/Benchmark/bench/gate.ts",
+    "bench:compare": "vite-node src/components/Benchmark/bench/gateCompare.ts"
   },
   "dependencies": {
     "@plitzi/nexus": "file:..",

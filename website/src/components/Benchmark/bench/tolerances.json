@@ -1,0 +1,11 @@
+{
+  "wide": 0.2,
+  "hot": 0.15,
+  "nested": 0.15,
+  "churn": 0.15,
+  "deepMap": 0.25,
+  "fanout": 0.35,
+  "derived": 0.15,
+  "liveFeed": 0.2,
+  "selection": 0.2
+}

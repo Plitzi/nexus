@@ -55,8 +55,13 @@ cd website && npm run check:docs   # the website's code samples against the real
 ## Rules that go wrong most
 
 - **Hot paths stay free when nothing observes.** Change listeners, interceptors and wakes are guarded by a length
-  check; notification loops are indexed `for` loops with the length cached (a `forEach` doubled the `hot` bench).
-  Run the benchmark before and after any change to `createStore/` and say the numbers.
+  check; notification loops are indexed `for` loops with the length cached (a `forEach` once doubled the `hot` bench;
+  on Node 24 it measures the same, but the loops stay as they are). Run the benchmark before and after any change to
+  `createStore/` and say the numbers. CI holds it too: `.github/workflows/bench.yml` measures nexus's cases on the
+  change and its base in turns and fails past a case's tolerance (`website/src/components/Benchmark/bench/
+  tolerances.json`, twice its measured noise) — tightened when a case steadies, never loosened to let a change through.
+- **The core's tests run in Node, the bindings' in jsdom** (`vite.config.ts`, two projects): a core test that needs
+  `window` is named in `DOM_TESTS`, never the whole suite moved back.
 - **`getState()` never returns the live object.** Single-segment writes mutate in place because every snapshot is a
   clone; multi-segment writes stay immutable with structural sharing. Do not break either side of that invariant.
 - **The codegen writer (`new Function`) has a recursive fallback** for CSP without `unsafe-eval`; tests cover both and

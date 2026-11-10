@@ -136,6 +136,27 @@ export function runBenchmark(reps = 5): BenchmarkResult {
   return { scenarios };
 }
 
+/**
+ * nexus alone, each scenario's median of `reps` — what the CI gate compares between a change and its base on one
+ * runner (`gate.ts`). The other stores are left out: they do not change with this repository, and they are most of the
+ * time a full run takes.
+ */
+export function runNexusOnly(reps = 15): { id: string; label: string; ms: number }[] {
+  resetSink();
+  for (const scenario of SCENARIOS) {
+    scenario.warmup(sdkAdapter);
+  }
+
+  const results = SCENARIOS.map(scenario => ({
+    id: scenario.id,
+    label: scenario.label,
+    ms: measure(() => scenario.run(sdkAdapter), reps).ms
+  }));
+  guardSink();
+
+  return results;
+}
+
 // Same workloads, but emits each scenario as it finishes so a worker can stream progress to the UI. Warms every
 // store first (so JIT compilation doesn't skew the first timed scenario), then measures one scenario at a time.
 export function runBenchmarkStreaming(reps: number, onScenario: (scenario: ScenarioResult) => void): void {
