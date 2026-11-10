@@ -10,6 +10,13 @@ on:
   push:
     branches:
       - main
+  # A release is gated too (ci.yml), against the release before it: what is published is measured, not only what merged.
+  workflow_call:
+    inputs:
+      base:
+        description: The ref the change is measured against
+        required: true
+        type: string
 
 concurrency:
   group: bench-${{ github.ref }}
@@ -27,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: base
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          ref: ${{ inputs.base || (github.event_name == 'pull_request' && github.event.pull_request.base.sha) || github.event.before }}
 
       - uses: actions/setup-node@v4
         with:
@@ -50,7 +57,8 @@ jobs:
           (cd head/website && npm ci --no-audit --no-fund)
           (cd base/website && npm ci --no-audit --no-fund)
 
-      # In turns, three of each: one slow moment of a shared runner lands on one turn, and the best of each is compared.
+      # In turns, each the base then the head: a case is judged by the median of its turns' head ÷ base, so a moment the
+      # runner is loaded slows one turn, which the others outvote.
       - name: Measure
         if: steps.gated.outputs.yes == 'true'
         run: |
@@ -59,13 +67,32 @@ jobs:
             (cd head/website && npm run -s bench:gate -- "$RUNNER_TEMP/head-$turn.json")
           done
 
+      # Soft: what it finds slower is written down, and confirmed below before anything fails.
       - name: Compare
         if: steps.gated.outputs.yes == 'true'
         working-directory: head/website
         run: |
           npm run -s bench:compare -- \
-            --base "$RUNNER_TEMP"/base-1.json "$RUNNER_TEMP"/base-2.json "$RUNNER_TEMP"/base-3.json \
-            --head "$RUNNER_TEMP"/head-1.json "$RUNNER_TEMP"/head-2.json "$RUNNER_TEMP"/head-3.json
+            --base "$RUNNER_TEMP"/base-{1,2,3}.json --head "$RUNNER_TEMP"/head-{1,2,3}.json \
+            --soft --slower "$RUNNER_TEMP/slower.txt"
+
+      # A case the first three turns found slower is measured in four more, and only what all seven find slower fails.
+      - name: Confirm
+        if: steps.gated.outputs.yes == 'true'
+        run: |
+          if [ ! -s "$RUNNER_TEMP/slower.txt" ]; then
+            echo "Nothing to confirm."
+            exit 0
+          fi
+          echo "::notice::Confirming: $(tr '\n' ' ' < "$RUNNER_TEMP/slower.txt")"
+          for turn in 4 5 6 7; do
+            (cd base/website && npm run -s bench:gate -- "$RUNNER_TEMP/base-$turn.json")
+            (cd head/website && npm run -s bench:gate -- "$RUNNER_TEMP/head-$turn.json")
+          done
+          cd head/website
+          npm run -s bench:compare -- \
+            --base "$RUNNER_TEMP"/base-{1,2,3,4,5,6,7}.json --head "$RUNNER_TEMP"/head-{1,2,3,4,5,6,7}.json \
+            --only "$RUNNER_TEMP/slower.txt"
 
       # What a consumer loads per public entry, compressed, on the change and its base: built from each side's own
       # install and measured by the head's script on both — a base from before it has its dist all the same.

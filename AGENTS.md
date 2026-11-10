@@ -57,8 +57,10 @@ cd website && npm run check:docs   # the website's code samples against the real
 - **Hot paths stay free when nothing observes.** Change listeners, interceptors and wakes are guarded by a length
   check; notification loops are indexed `for` loops with the length cached (a `forEach` once doubled the `hot` bench;
   on Node 24 it measures the same, but the loops stay as they are). Run the benchmark before and after any change to
-  `createStore/` and say the numbers. CI holds it too: `.github/workflows/bench.yml` measures nexus's cases on the
-  change and its base in turns and fails past a case's tolerance (`website/src/components/Benchmark/bench/
+  `createStore/` and say the numbers. CI holds it too, on every change and on every release (against the release
+  before it): `.github/workflows/bench.yml` measures nexus's cases in turns — the base, then the head — judges each by
+  the median of its turns' head ÷ base, measures again in four more turns what that finds slower, and fails only
+  what all seven find slower past a case's tolerance (`website/src/components/Benchmark/bench/
   tolerances.json`, twice its measured noise) — tightened when a case steadies, never loosened to let a change through.
   The same job builds both sides and holds each public entry's compressed size (`node scripts/entrySizes.mjs`, compared
   by `scripts/entrySizesCompare.mjs`): past the larger of 5% and 512 B of gzip it fails — a module pulled into a barrel

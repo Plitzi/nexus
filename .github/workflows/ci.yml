@@ -145,9 +145,38 @@ jobs:
       - name: Yarn Tests
         run: yarn test
 
+  # The release this one follows: what the benchmark gate measures it against.
+  previous-release:
+    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.previous.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: The tag before this one
+        id: previous
+        run: |
+          tag=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          if [ -z "$tag" ]; then
+            echo "::error::No release before ${GITHUB_REF_NAME} to measure it against."
+            exit 1
+          fi
+          echo "Measured against $tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+  # What is published is measured, not only what merged: nexus is the hot path of every page (bench.yml).
+  bench:
+    needs: previous-release
+    uses: ./.github/workflows/bench.yml
+    with:
+      base: ${{ needs.previous-release.outputs.tag }}
+
   publish:
     if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
-    needs: tests
+    needs: [tests, bench]
     runs-on: ubuntu-latest
     strategy:
       matrix:
