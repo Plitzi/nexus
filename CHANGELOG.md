@@ -1,5 +1,28 @@
 # @plitzi/nexus
 
+## 1.5.1
+
+### Fixed
+
+- **A hot set read after many paths is cached again.** 1.5.0's path caches stop taking new paths for a while when a
+  whole generation fills with nothing of the one before read again — a rotation over more paths than they hold, where
+  swapping would keep no hit. Any burst of thousands of paths read once does the same, and then the few paths read next
+  (the page being edited) missed on every read until the rest ran out. The benchmark gate caught it on CI: `nested`
+  20% and `deepMap` 69% slower than 1.4.0, measured after the two new cases' thousands of paths.
+  - A path missed twice while the cache rests is read again, and ends the rest at once. In a rotation a path comes
+    back only after more misses than the cache remembers while it rests (an eighth of a generation).
+  - Against 1.4.0, the same benchmark on both, in turns: pages moved through 34% faster, 10,000 paths read in rotation
+    19% faster, every other case within its tolerance.
+  - Regression tests at the store's size (4,096): a hot set after thousands of paths read once and after a rotation,
+    pages moved through, a rotation's share (`src/helpers/generationalCache.test.ts`), and the store's own
+    `parsePath` splitting a hot path once after a burst (`src/helpers/parsePath.test.ts`) — each fails on 1.5.0.
+- **The benchmark gate's own cases measure what they say, and alone.** `pathsMoving` read the same twenty pages in each
+  of its fifteen repetitions — a rotation of 20,000 paths, not pages moved through — and both cases were warmed up
+  before the comparable ones, their paths left in the caches those were measured with. Now each repetition reads new
+  pages (`pagesMoving`), each case is warmed up just before it is measured, after the others (`pathsInRotation`), and a
+  case the base has not got is printed as new instead of failing the gate. The gate's rule is a module of its own
+  (`gateVerdict.ts`), tested with nexus's suite.
+
 ## 1.5.0
 
 ### Changed

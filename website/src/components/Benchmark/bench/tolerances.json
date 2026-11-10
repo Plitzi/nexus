@@ -8,6 +8,6 @@
   "derived": 0.15,
   "liveFeed": 0.2,
   "selection": 0.2,
-  "pathsMoving": 0.15,
-  "pathsRotating": 0.15
+  "pagesMoving": 0.15,
+  "pathsInRotation": 0.15
 }

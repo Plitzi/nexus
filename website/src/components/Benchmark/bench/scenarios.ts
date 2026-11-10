@@ -1,7 +1,7 @@
 import { jotaiAdapter } from './jotaiStore';
 import { mobxAdapter } from './mobxStore';
 import { naiveAdapter } from './naiveStore';
-import { pathsMoving, pathsRotating } from './pathCaches';
+import { pagesMoving, pathsRotating } from './pathCaches';
 import { reduxAdapter } from './reduxStore';
 import { sdkAdapter } from './sdkStore';
 import { guardSink, resetSink } from './shared';
@@ -101,13 +101,13 @@ const SCENARIOS: ScenarioConfig[] = [
 /** nexus's own cases, which no other store has a counterpart of: measured by the gate alone (`runNexusOnly`). */
 const NEXUS_SCENARIOS: { id: string; label: string; warmup: () => void; run: () => Sample }[] = [
   {
-    id: 'pathsMoving',
-    label: 'Paths in use that move · 20 pages of 1,000, each read 5×',
-    warmup: () => void pathsMoving(4, 1000, 2),
-    run: () => pathsMoving(20, 1000, 5)
+    id: 'pagesMoving',
+    label: 'Pages moved through · 20 new pages of 1,000 paths, each read 5×',
+    warmup: () => void pagesMoving(4, 1000, 2),
+    run: () => pagesMoving(20, 1000, 5)
   },
   {
-    id: 'pathsRotating',
+    id: 'pathsInRotation',
     label: 'Paths read in rotation · 10,000, 5 rounds',
     warmup: () => void pathsRotating(10_000, 1),
     run: () => pathsRotating(10_000, 5)
@@ -164,16 +164,17 @@ export function runNexusOnly(reps = 15): { id: string; label: string; ms: number
     scenario.warmup(sdkAdapter);
   }
 
-  NEXUS_SCENARIOS.forEach(scenario => scenario.warmup());
-
-  const results = [
-    ...SCENARIOS.map(scenario => ({
-      id: scenario.id,
-      label: scenario.label,
-      ms: measure(() => scenario.run(sdkAdapter), reps).ms
-    })),
-    ...NEXUS_SCENARIOS.map(scenario => ({ id: scenario.id, label: scenario.label, ms: measure(scenario.run, reps).ms }))
-  ];
+  const results = SCENARIOS.map(scenario => ({
+    id: scenario.id,
+    label: scenario.label,
+    ms: measure(() => scenario.run(sdkAdapter), reps).ms
+  }));
+  // After the others, each warmed up just before it is measured: the path caches are the process's, and their thousands
+  // of paths would be in the caches the others are measured with — or one's in the other's.
+  for (const scenario of NEXUS_SCENARIOS) {
+    scenario.warmup();
+    results.push({ id: scenario.id, label: scenario.label, ms: measure(scenario.run, reps).ms });
+  }
   guardSink();
 
   return results;

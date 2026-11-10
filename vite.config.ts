@@ -105,7 +105,8 @@ export default defineConfig(({ mode, command }) => ({
         test: {
           name: 'core',
           environment: 'node',
-          include: ['src/**/*.test.ts'],
+          // The benchmark gate's rule is CI's, and held with the rest: its scripts are the website's.
+          include: ['src/**/*.test.ts', 'website/src/components/Benchmark/bench/**/*.test.ts'],
           exclude: ['src/react/**', ...DOM_TESTS]
         }
       },

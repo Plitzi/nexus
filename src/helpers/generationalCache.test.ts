@@ -41,67 +41,167 @@ describe('createGenerationalCache', () => {
     expect(cache.size()).toBeLessThanOrEqual(16);
   });
 
-  it('stops taking new entries while the reads cycle over more than it holds, and keeps its share of them', () => {
-    const limit = 4;
-    const cache = createGenerationalCache<string>(limit);
-    const rotation = Array.from({ length: 10 }, (_, index) => `k${String(index)}`);
-    const read = (key: string): boolean => {
-      if (cache.get(key) !== undefined) {
-        return true;
+  /** Reads a rotation as a cache's caller does — a miss computes and sets — and says how many were hits. */
+  const rotate = (cache: ReturnType<typeof createGenerationalCache<string>>, keys: string[], reads: number): number => {
+    let hits = 0;
+    for (let read = 0; read < reads; read++) {
+      const key = keys[read % keys.length];
+      if (cache.get(key) === undefined) {
+        cache.set(key, key);
+      } else {
+        hits++;
       }
-
-      cache.set(key, key);
-
-      return false;
-    };
-    for (let round = 0; round < 3; round++) {
-      rotation.forEach(read);
     }
 
-    const hits = rotation.filter(read).length;
+    return hits;
+  };
+  // Past the two generations of 600 it answers from, within the three it tells a rotation by, and coming round after
+  // more misses than it remembers while it rests: a rotation as the benchmark's (10,000 over 4,096).
+  const ROTATION = Array.from({ length: 1600 }, (_, index) => `r${String(index)}`);
 
-    // Swapping in a rotation of 10 over generations of 4 would hit nothing; kept as they are, the two hold most of it.
-    expect(hits).toBeGreaterThanOrEqual(limit);
-    expect(cache.size()).toBeLessThanOrEqual(2 * limit);
+  it('stops taking new entries while the reads cycle over more than it holds, and keeps its share of them', () => {
+    const cache = createGenerationalCache<string>(600);
+    rotate(cache, ROTATION, 16_000);
+
+    // Swapping in this rotation would hit nothing; kept as they are, the two generations hold 1,200 of its 1,600.
+    expect(rotate(cache, ROTATION, 1600)).toBeGreaterThanOrEqual(600);
+    expect(cache.size()).toBeLessThanOrEqual(1200);
   });
 
-  /** Two generations of 2 full — `a b` old, `c d` young — with nothing read again: the next miss starts a rest. */
-  const resting = (limit: number) => {
-    const cache = createGenerationalCache<string>(limit);
-    ['a', 'b', 'c', 'd'].forEach(key => cache.set(key, key));
-    cache.set('found-it', 'x');
+  // What a builder does that is no rotation: pages of paths, each read a few times, never come back to. A rest it takes
+  // for one is ended by the first path read again, and the page's paths are hit from then on.
+  it('keeps hitting a set in use that moves', () => {
+    const cache = createGenerationalCache<string>(100);
+    let hits = 0;
+    for (let page = 0; page < 20; page++) {
+      const paths = Array.from({ length: 60 }, (_, index) => `p${String(page)}.${String(index)}`);
+      hits += rotate(cache, paths, 60 * 5);
+    }
+
+    // Four of each path's five reads could hit at most; a rest ended by a page costs that page a read of each.
+    expect(hits).toBeGreaterThan(0.7 * 20 * 60 * 4);
+  });
+
+  /** Read the rotation until it rests. */
+  const resting = () => {
+    const cache = createGenerationalCache<string>(600);
+    // Two whole rounds: each read of `rotate` starts the rotation again, so it reads whole ones.
+    rotate(cache, ROTATION, 2 * ROTATION.length);
+
+    expect(cache.resting()).toBe(true);
 
     return cache;
   };
-  const restFor = (cache: ReturnType<typeof resting>, misses: number) => {
-    for (let miss = 0; miss < misses; miss++) {
-      cache.set(`miss${String(miss)}`, 'x');
-    }
-  };
 
-  it('takes nothing new while it rests, four times its limit of misses', () => {
-    const cache = resting(2);
-    restFor(cache, 7);
-    cache.set('late', 'L');
+  it('takes nothing new while it rests', () => {
+    const cache = resting();
+    cache.set('once', 'O');
 
-    expect(cache.get('found-it')).toBeUndefined();
-    expect(cache.get('late')).toBeUndefined();
+    expect(cache.get('once')).toBeUndefined();
+    expect(cache.resting()).toBe(true);
   });
 
-  it('takes new entries again once it has rested, when what it kept was read again meanwhile', () => {
-    const cache = resting(2);
-    expect(cache.get('a')).toBe('a');
-    restFor(cache, 8);
-    cache.set('back', 'B');
+  // What a rotation is followed by: a few paths read over and over. Resting, they missed on every read.
+  it('takes a key missed twice while it rests, and ends the rest', () => {
+    const cache = resting();
+    cache.set('hot', 'H');
 
-    expect(cache.get('back')).toBe('B');
+    expect(cache.get('hot')).toBeUndefined();
+    cache.set('hot', 'H');
+    expect(cache.get('hot')).toBe('H');
+    expect(cache.resting()).toBe(false);
+    cache.set('next', 'N');
+    expect(cache.get('next')).toBe('N');
   });
 
   it('rests again when, rested, the reads still cycle', () => {
-    const cache = resting(2);
-    restFor(cache, 8);
-    cache.set('still', 'S');
+    const cache = resting();
+    let rested = false;
+    for (let round = 0; round < 50 && cache.resting(); round++) {
+      rotate(cache, ROTATION, ROTATION.length);
+    }
 
-    expect(cache.get('still')).toBeUndefined();
+    for (let round = 0; round < 50 && !rested; round++) {
+      rotate(cache, ROTATION, ROTATION.length);
+      rested = cache.resting();
+    }
+
+    expect(rested).toBe(true);
+  });
+});
+
+/**
+ * The 1.5.0 regressions, at the size the store's caches have (4,096): what the benchmark gate caught on CI and what a
+ * builder does. Each failed on 1.5.0's cache.
+ */
+describe('createGenerationalCache, at the store’s size', () => {
+  const LIMIT = 4096;
+
+  /** Reads `keys` in order as the store does — a miss computes and sets — and says how many were hits. */
+  const read = (cache: ReturnType<typeof createGenerationalCache<string>>, keys: readonly string[]): number => {
+    let hits = 0;
+    for (const key of keys) {
+      if (cache.get(key) === undefined) {
+        cache.set(key, key);
+      } else {
+        hits++;
+      }
+    }
+
+    return hits;
+  };
+  const many = (prefix: string, count: number) =>
+    Array.from({ length: count }, (_, index) => `${prefix}${String(index)}`);
+
+  // CI, 1.5.0: two cases' warm-ups read 14,000 paths, the cache rested, and `nested` and `deepMap` — a few paths written
+  // thousands of times — missed on every read: 20% and 69% slower than 1.4.0.
+  it('caches the few paths read after thousands read once', () => {
+    const cache = createGenerationalCache<string>(LIMIT);
+    read(cache, many('page.', 8000));
+    read(cache, many('rotation.', 10_000));
+    const hot = many('a.b.c.d.e.leaf', 10);
+    const reads = Array.from({ length: 3000 }, (_, index) => hot[index % hot.length]);
+
+    expect(read(cache, reads)).toBeGreaterThanOrEqual(reads.length - 2 * hot.length);
+  });
+
+  it('caches them after a rotation it rests for, too', () => {
+    const cache = createGenerationalCache<string>(LIMIT);
+    const rotation = many('rotation.', 10_000);
+    for (let round = 0; round < 5; round++) {
+      read(cache, rotation);
+    }
+
+    expect(cache.resting()).toBe(true);
+    const hot = many('hot.', 10);
+    const reads = Array.from({ length: 3000 }, (_, index) => hot[index % hot.length]);
+
+    expect(read(cache, reads)).toBeGreaterThanOrEqual(reads.length - 2 * hot.length);
+    expect(cache.resting()).toBe(false);
+  });
+
+  // A builder moving through pages of a thousand elements, each read a few times, never coming back.
+  it('hits the re-reads of pages moved through', () => {
+    const cache = createGenerationalCache<string>(LIMIT);
+    let hits = 0;
+    for (let page = 0; page < 20; page++) {
+      const paths = many(`p${String(page)}.e`, 1000);
+      for (let pass = 0; pass < 5; pass++) {
+        hits += read(cache, paths);
+      }
+    }
+
+    expect(hits).toBeGreaterThan(0.9 * 20 * 1000 * 4);
+  });
+
+  // 10,000 paths in rotation over two generations of 4,096: swapping would hit none, 1.4.0 hit its first 4,096.
+  it('keeps hitting a share of a rotation it cannot hold', () => {
+    const cache = createGenerationalCache<string>(LIMIT);
+    const rotation = many('rotation.', 10_000);
+    for (let round = 0; round < 3; round++) {
+      read(cache, rotation);
+    }
+
+    expect(read(cache, rotation)).toBeGreaterThanOrEqual(LIMIT);
   });
 });

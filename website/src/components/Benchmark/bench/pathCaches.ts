@@ -11,19 +11,23 @@ import type { Sample } from './shared';
 
 type Pages = Record<string, Record<string, { v: number }>>;
 
-const pagesOf = (pages: number, perPage: number): Pages =>
+const pagesOf = (pages: number, perPage: number, prefix = 'p'): Pages =>
   Object.fromEntries(
     Array.from({ length: pages }, (_, page) => [
-      `p${String(page)}`,
+      `${prefix}${String(page)}`,
       Object.fromEntries(Array.from({ length: perPage }, (__, item) => [`e${String(item)}`, { v: item }]))
     ])
   );
 
+/** Every call's pages are its own: a page left is never read again, as a builder's — not the same pages each rep. */
+let calls = 0;
+
 /** The set of paths in use moves: a builder switching pages, each page's elements read a few times over. */
-export const pathsMoving = (pages: number, perPage: number, passes: number): Sample => {
-  const store = createStore<Pages>(pagesOf(pages, perPage));
+export const pagesMoving = (pages: number, perPage: number, passes: number): Sample => {
+  const prefix = `c${String(calls++)}p`;
+  const store = createStore<Pages>(pagesOf(pages, perPage, prefix));
   const paths = Array.from({ length: pages }, (_, page) =>
-    Array.from({ length: perPage }, (__, item) => `p${String(page)}.e${String(item)}.v`)
+    Array.from({ length: perPage }, (__, item) => `${prefix}${String(page)}.e${String(item)}.v`)
   );
   let read = 0;
   const start = performance.now();

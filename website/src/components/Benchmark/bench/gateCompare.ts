@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 
+import { gateVerdict } from './gateVerdict';
 import tolerances from './tolerances.json';
 
 /**
@@ -38,34 +39,27 @@ const best = (paths: string[]): Map<string, { label: string; ms: number }> => {
 
 const base = best(files('--base'));
 const head = best(files('--head'));
-const limits: Record<string, number | undefined> = tolerances;
-const slower: string[] = [];
+const { cases, failures } = gateVerdict(base, head, tolerances);
 
 console.log(
-  `${'case'.padEnd(12)} ${'base ms'.padStart(10)} ${'head ms'.padStart(10)} ${'change'.padStart(8)}  tolerance`
+  `${'case'.padEnd(16)} ${'base ms'.padStart(10)} ${'head ms'.padStart(10)} ${'change'.padStart(8)}  tolerance`
 );
-for (const [id, { label, ms }] of head) {
-  const before = base.get(id);
-  const tolerance = limits[id];
-  if (!before || tolerance === undefined) {
-    slower.push(`${id}: ${before ? 'no tolerance in tolerances.json' : 'not measured on the base'} — ${label}`);
-    continue;
-  }
-
-  const change = ms / before.ms - 1;
-  const over = change > tolerance;
-  console.log(
-    `${id.padEnd(12)} ${before.ms.toFixed(3).padStart(10)} ${ms.toFixed(3).padStart(10)} ${`${(change * 100).toFixed(1)}%`.padStart(8)}  ${String(Math.round(tolerance * 100))}%${over ? '  ✗ slower' : ''}`
-  );
-  if (over) {
-    slower.push(
-      `${id}: ${(change * 100).toFixed(1)}% slower than its base, past its ${String(Math.round(tolerance * 100))}% — ${label}`
+for (const verdict of cases) {
+  if (verdict.kind === 'compared') {
+    const { id, base: before, head: after, change, tolerance, slower } = verdict;
+    console.log(
+      `${id.padEnd(16)} ${before.toFixed(3).padStart(10)} ${after.toFixed(3).padStart(10)} ${`${(change * 100).toFixed(1)}%`.padStart(8)}  ${String(Math.round(tolerance * 100))}%${slower ? '  ✗ slower' : ''}`
+    );
+  } else {
+    const said = verdict.kind === 'new' ? 'new' : 'untolerated';
+    console.log(
+      `${verdict.id.padEnd(16)} ${'—'.padStart(10)} ${verdict.ms.toFixed(3).padStart(10)} ${said.padStart(8)}  ${verdict.label}`
     );
   }
 }
 
-if (slower.length > 0) {
-  console.error(`\nnexus is slower than its base:\n${slower.map(line => `- ${line}`).join('\n')}`);
+if (failures.length > 0) {
+  console.error(`\nnexus is slower than its base:\n${failures.map(line => `- ${line}`).join('\n')}`);
   process.exit(1);
 }
 
