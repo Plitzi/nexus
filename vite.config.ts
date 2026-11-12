@@ -96,7 +96,7 @@ export default defineConfig(({ mode, command }) => ({
     setupFiles: ['./setupTests.ts'],
     /**
      * The core is framework-free and runs in Node; only what renders or reads `window` gets a DOM. Every file starting a
-     * jsdom was three quarters of the run's time (RFC 0033 N6). A test that needs a DOM is one of the bindings', a
+     * jsdom was three quarters of the run's time. A test that needs a DOM is one of the bindings', a
      * `.test.tsx`, or named in `DOM_TESTS`.
      */
     projects: [
